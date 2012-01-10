@@ -35,6 +35,25 @@ function editing_context() {
     var bounds = map.calculateBounds().scale(0.5);
     var box = new OpenLayers.Feature.Vector(bounds.toGeometry());
     layer.addFeatures([box]);
+
+    var download_button = $('<a href="#" class="button">').text('download');
+    download_button.click(function(evt) {
+        evt.preventDefault();
+        hide_message();
+        edit_control.deactivate();
+        layer.removeFeatures([box]);
+        console.log('downloading...');
+    });
+    message("Select area then click ", download_button);
+}
+
+function message() {
+    var div = $('#message').empty().addClass('visible')
+    div.append.apply(div, arguments);
+}
+
+function hide_message() {
+    $('#message').removeClass('visible');
 }
 
 });
