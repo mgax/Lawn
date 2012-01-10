@@ -53,9 +53,21 @@ function editing_context() {
             console.log('nodes: ' + $('osm > node', data).length);
             console.log('ways: ' + $('osm > way', data).length);
             console.log('relations: ' + $('osm > relation', data).length);
+            display_osm(data, layer);
         });
     });
     message("Select area then click ", download_button);
+}
+
+function display_osm(osm_doc, layer) {
+    $('osm > node', osm_doc).each(function() {
+        var node = $(this);
+        var lon = node.attr('lon'),
+            lat = node.attr('lat');
+        var point = new OpenLayers.Geometry.Point(lon, lat);
+        var feature = new OpenLayers.Feature.Vector(project_to_map(point));
+        layer.addFeatures([feature]);
+    });
 }
 
 function download(bbox) {
