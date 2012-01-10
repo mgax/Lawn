@@ -49,8 +49,17 @@ function editing_context() {
         var b = project_from_map(box.geometry.bounds);
         var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
         console.log('downloading...', bbox);
+        download(bbox).done(function(data) {
+            console.log('nodes: ' + $('osm > node', data).length);
+            console.log('ways: ' + $('osm > way', data).length);
+            console.log('relations: ' + $('osm > relation', data).length);
+        });
     });
     message("Select area then click ", download_button);
+}
+
+function download(bbox) {
+    return $.get('/download', {bbox: bbox});
 }
 
 function message() {
