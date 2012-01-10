@@ -1,9 +1,13 @@
 $(document).ready(function() {
 
 var wgs84 = new OpenLayers.Projection("EPSG:4326");
-function project_to_map(lonlat) {
-    var map_proj = map.getProjectionObject();
-    return lonlat.transform(wgs84, map_proj);
+var map_proj = new OpenLayers.Projection("EPSG:900913");
+function project_to_map(value) {
+    return value.transform(wgs84, map_proj);
+}
+
+function project_from_map(value) {
+    return value.transform(map_proj, wgs84);
 }
 
 var map = new OpenLayers.Map('map');
@@ -42,7 +46,9 @@ function editing_context() {
         hide_message();
         edit_control.deactivate();
         layer.removeFeatures([box]);
-        console.log('downloading...');
+        var b = project_from_map(box.geometry.bounds);
+        var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
+        console.log('downloading...', bbox);
     });
     message("Select area then click ", download_button);
 }
