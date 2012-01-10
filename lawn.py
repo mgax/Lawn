@@ -15,6 +15,11 @@ def create_app():
     app.register_blueprint(webpages)
     if 'APP_SETTINGS' in os.environ:
         app.config.from_envvar('APP_SETTINGS')
+    if 'OPENLAYERS_SRC' in app.config:
+        from werkzeug.wsgi import SharedDataMiddleware
+        app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
+            '/static/openlayers': app.config['OPENLAYERS_SRC'],
+        })
     return app
 
 

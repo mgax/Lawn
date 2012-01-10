@@ -2,6 +2,10 @@
 <html>
 <head>
   <title>Lawn OSM Editor</title>
+  {% set openlayers_js = 'openlayers/lib/OpenLayers.js'
+                         if config['OPENLAYERS_SRC'] else
+                         'openlayers/OpenLayers.js' %}
+  <script src="{{ url_for('static', filename=openlayers_js) }}"></script>
 </head>
 <body>
 
