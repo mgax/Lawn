@@ -60,12 +60,25 @@ function editing_context() {
 }
 
 function display_osm(osm_doc, layer) {
+    var node_map = {};
     $('osm > node', osm_doc).each(function() {
         var node = $(this);
         var lon = node.attr('lon'),
             lat = node.attr('lat');
         var point = new OpenLayers.Geometry.Point(lon, lat);
         var feature = new OpenLayers.Feature.Vector(project_to_map(point));
+        layer.addFeatures([feature]);
+        node_map[node.attr('id')] = feature;
+    });
+
+    $('osm > way', osm_doc).each(function() {
+        var way = $(this);
+        var line_string = new OpenLayers.Geometry.LineString();
+        $('> nd', way).each(function() {
+            var node_feature = node_map[$(this).attr('ref')];
+            line_string.addComponent(node_feature.geometry);
+        });
+        var feature = new OpenLayers.Feature.Vector(line_string);
         layer.addFeatures([feature]);
     });
 }
