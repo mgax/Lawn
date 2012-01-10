@@ -8,10 +8,11 @@
                          'openlayers/OpenLayers.js' %}
   <script src="{{ url_for('static', filename=openlayers_js) }}"></script>
   <script src="{{ url_for('static', filename='editor.js') }}"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
-<div class="map"></div>
+<div id="map"></div>
 
 </body>
 </html>
