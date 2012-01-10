@@ -10,4 +10,7 @@ var map = new OpenLayers.Map('map');
 map.addLayer(new OpenLayers.Layer.OSM("OpenStreetMap"));
 map.setCenter(project_to_map(new OpenLayers.LonLat(26.082, 44.475)), 16);
 
+
+var menu_div = $('#menu').append('menu!');
+
 });
