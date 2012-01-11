@@ -26,6 +26,7 @@ L.editing_context = function(map) {
         evt.preventDefault();
         L.hide_message();
         EC.edit_control.deactivate();
+        EC.map.removeControl(EC.edit_control);
         EC.download_layer.removeFeatures([box]);
         EC.map.removeLayer(EC.download_layer);
         var b = L.project_from_map(box.geometry.bounds);
@@ -37,6 +38,9 @@ L.editing_context = function(map) {
             console.log('relations: ' + $('osm > relation', data).length);
             EC.map.addLayers([EC.node_layer, EC.way_layer]);
             display_osm(data, EC.node_layer, EC.way_layer);
+            EC.edit_control = new OpenLayers.Control.ModifyFeature(EC.node_layer);
+            EC.map.addControl(EC.edit_control);
+            EC.edit_control.activate();
         });
     });
     L.message("Select area then click ", download_button);
