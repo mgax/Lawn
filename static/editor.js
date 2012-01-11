@@ -20,35 +20,36 @@ var menu_div = $('#menu');
 var edit_button = $('<a href="#" class="button">').text('edit');
 edit_button.appendTo(menu_div).click(function(evt) {
     evt.preventDefault();
-    editing_context();
+    window.EC = editing_context(map);
 });
 
-function editing_context() {
-    var download_layer = new OpenLayers.Layer.Vector('Edit', {});
-    map.addLayer(download_layer);
+function editing_context(map) {
+    var EC = {map: map};
+    EC.download_layer = new OpenLayers.Layer.Vector('Edit', {});
+    EC.map.addLayer(EC.download_layer);
 
-    var edit_control = new OpenLayers.Control.ModifyFeature(download_layer, {
+    EC.edit_control = new OpenLayers.Control.ModifyFeature(EC.download_layer, {
         vertexRenderIntent: 'temporary',
         mode: OpenLayers.Control.ModifyFeature.RESIZE |
               OpenLayers.Control.ModifyFeature.RESHAPE |
               OpenLayers.Control.ModifyFeature.DRAG
     });
-    map.addControl(edit_control);
-    edit_control.activate();
+    EC.map.addControl(EC.edit_control);
+    EC.edit_control.activate();
 
-    var bounds = map.calculateBounds().scale(0.5);
+    var bounds = EC.map.calculateBounds().scale(0.5);
     var box = new OpenLayers.Feature.Vector(bounds.toGeometry());
-    download_layer.addFeatures([box]);
+    EC.download_layer.addFeatures([box]);
 
     var download_button = $('<a href="#" class="button">').text('download');
-    var node_layer = new OpenLayers.Layer.Vector('Nodes', {});
-    var way_layer = new OpenLayers.Layer.Vector('Ways', {});
+    EC.node_layer = new OpenLayers.Layer.Vector('Nodes', {});
+    EC.way_layer = new OpenLayers.Layer.Vector('Ways', {});
     download_button.click(function(evt) {
         evt.preventDefault();
         hide_message();
-        edit_control.deactivate();
-        download_layer.removeFeatures([box]);
-        map.removeLayer(download_layer);
+        EC.edit_control.deactivate();
+        EC.download_layer.removeFeatures([box]);
+        EC.map.removeLayer(EC.download_layer);
         var b = project_from_map(box.geometry.bounds);
         var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
         console.log('downloading...', bbox);
@@ -56,11 +57,12 @@ function editing_context() {
             console.log('nodes: ' + $('osm > node', data).length);
             console.log('ways: ' + $('osm > way', data).length);
             console.log('relations: ' + $('osm > relation', data).length);
-            map.addLayers([node_layer, way_layer]);
-            display_osm(data, node_layer, way_layer);
+            EC.map.addLayers([EC.node_layer, EC.way_layer]);
+            display_osm(data, EC.node_layer, EC.way_layer);
         });
     });
     message("Select area then click ", download_button);
+    return EC;
 }
 
 function display_osm(osm_doc, node_layer, way_layer) {
