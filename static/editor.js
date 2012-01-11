@@ -1,29 +1,7 @@
-$(document).ready(function() {
-
-var wgs84 = new OpenLayers.Projection("EPSG:4326");
-var map_proj = new OpenLayers.Projection("EPSG:900913");
-function project_to_map(value) {
-    return value.transform(wgs84, map_proj);
-}
-
-function project_from_map(value) {
-    return value.transform(map_proj, wgs84);
-}
-
-var map = new OpenLayers.Map('map');
-map.addLayer(new OpenLayers.Layer.OSM("OpenStreetMap"));
-map.setCenter(project_to_map(new OpenLayers.LonLat(26.082, 44.475)), 16);
+(function(L) {
 
 
-var menu_div = $('#menu');
-
-var edit_button = $('<a href="#" class="button">').text('edit');
-edit_button.appendTo(menu_div).click(function(evt) {
-    evt.preventDefault();
-    window.EC = editing_context(map);
-});
-
-function editing_context(map) {
+L.editing_context = function(map) {
     var EC = {map: map};
     EC.download_layer = new OpenLayers.Layer.Vector('Edit', {});
     EC.map.addLayer(EC.download_layer);
@@ -46,14 +24,14 @@ function editing_context(map) {
     EC.way_layer = new OpenLayers.Layer.Vector('Ways', {});
     download_button.click(function(evt) {
         evt.preventDefault();
-        hide_message();
+        L.hide_message();
         EC.edit_control.deactivate();
         EC.download_layer.removeFeatures([box]);
         EC.map.removeLayer(EC.download_layer);
-        var b = project_from_map(box.geometry.bounds);
+        var b = L.project_from_map(box.geometry.bounds);
         var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
         console.log('downloading...', bbox);
-        download(bbox).done(function(data) {
+        L.download(bbox).done(function(data) {
             console.log('nodes: ' + $('osm > node', data).length);
             console.log('ways: ' + $('osm > way', data).length);
             console.log('relations: ' + $('osm > relation', data).length);
@@ -61,9 +39,9 @@ function editing_context(map) {
             display_osm(data, EC.node_layer, EC.way_layer);
         });
     });
-    message("Select area then click ", download_button);
+    L.message("Select area then click ", download_button);
     return EC;
-}
+};
 
 function display_osm(osm_doc, node_layer, way_layer) {
     var node_map = {};
@@ -72,7 +50,7 @@ function display_osm(osm_doc, node_layer, way_layer) {
         var lon = node.attr('lon'),
             lat = node.attr('lat');
         var point = new OpenLayers.Geometry.Point(lon, lat);
-        var feature = new OpenLayers.Feature.Vector(project_to_map(point));
+        var feature = new OpenLayers.Feature.Vector(L.project_to_map(point));
         node_layer.addFeatures([feature]);
         node_map[node.attr('id')] = feature;
     });
@@ -89,17 +67,4 @@ function display_osm(osm_doc, node_layer, way_layer) {
     });
 }
 
-function download(bbox) {
-    return $.get('/download', {bbox: bbox});
-}
-
-function message() {
-    var div = $('#message').empty().addClass('visible')
-    div.append.apply(div, arguments);
-}
-
-function hide_message() {
-    $('#message').removeClass('visible');
-}
-
-});
+})(window.L);
