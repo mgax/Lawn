@@ -39,6 +39,14 @@ L.editing_context = function(map) {
             EC.map.addLayers([EC.node_layer, EC.way_layer]);
             EC.display_osm(data);
             EC.edit_control = new OpenLayers.Control.ModifyFeature(EC.node_layer);
+            EC.node_layer.events.on({
+                'beforefeaturemodified': function(e) {
+                    EC.node_editor($(e.feature.osm_node));
+                },
+                'afterfeaturemodified': function(e) {
+                    if(EC.NE) EC.NE.close();
+                }
+            });
             EC.map.addControl(EC.edit_control);
             EC.edit_control.activate();
         });
@@ -53,6 +61,7 @@ L.editing_context = function(map) {
                 lat = node.attr('lat');
             var point = new OpenLayers.Geometry.Point(lon, lat);
             var feature = new OpenLayers.Feature.Vector(L.project_to_map(point));
+            feature.osm_node = this;
             EC.node_layer.addFeatures([feature]);
             EC.node_map[node.attr('id')] = feature;
         });
@@ -65,8 +74,19 @@ L.editing_context = function(map) {
                 line_string.addComponent(node_feature.geometry);
             });
             var feature = new OpenLayers.Feature.Vector(line_string);
+            feature.osm_way = this;
             EC.way_layer.addFeatures([feature]);
         });
+    };
+
+    EC.node_editor = function(node) {
+        var NE = EC.NE = {};
+        NE.form = $('<div class="node-tags">').insertAfter($('#menu'));
+        NE.form.append('node ' + node.attr('id'));
+        NE.close = function() {
+            EC.NE = null;
+            NE.form.remove();
+        };
     };
 
     return EC;
