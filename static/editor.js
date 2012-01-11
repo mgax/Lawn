@@ -24,10 +24,10 @@ edit_button.appendTo(menu_div).click(function(evt) {
 });
 
 function editing_context() {
-    var layer = new OpenLayers.Layer.Vector('Edit', {});
-    map.addLayer(layer);
+    var download_layer = new OpenLayers.Layer.Vector('Edit', {});
+    map.addLayer(download_layer);
 
-    var edit_control = new OpenLayers.Control.ModifyFeature(layer, {
+    var edit_control = new OpenLayers.Control.ModifyFeature(download_layer, {
         vertexRenderIntent: 'temporary',
         mode: OpenLayers.Control.ModifyFeature.RESIZE |
               OpenLayers.Control.ModifyFeature.RESHAPE |
@@ -38,14 +38,17 @@ function editing_context() {
 
     var bounds = map.calculateBounds().scale(0.5);
     var box = new OpenLayers.Feature.Vector(bounds.toGeometry());
-    layer.addFeatures([box]);
+    download_layer.addFeatures([box]);
 
     var download_button = $('<a href="#" class="button">').text('download');
+    var node_layer = new OpenLayers.Layer.Vector('Nodes', {});
+    var way_layer = new OpenLayers.Layer.Vector('Ways', {});
     download_button.click(function(evt) {
         evt.preventDefault();
         hide_message();
         edit_control.deactivate();
-        layer.removeFeatures([box]);
+        download_layer.removeFeatures([box]);
+        map.removeLayer(download_layer);
         var b = project_from_map(box.geometry.bounds);
         var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
         console.log('downloading...', bbox);
@@ -53,13 +56,14 @@ function editing_context() {
             console.log('nodes: ' + $('osm > node', data).length);
             console.log('ways: ' + $('osm > way', data).length);
             console.log('relations: ' + $('osm > relation', data).length);
-            display_osm(data, layer);
+            map.addLayers([node_layer, way_layer]);
+            display_osm(data, node_layer, way_layer);
         });
     });
     message("Select area then click ", download_button);
 }
 
-function display_osm(osm_doc, layer) {
+function display_osm(osm_doc, node_layer, way_layer) {
     var node_map = {};
     $('osm > node', osm_doc).each(function() {
         var node = $(this);
@@ -67,7 +71,7 @@ function display_osm(osm_doc, layer) {
             lat = node.attr('lat');
         var point = new OpenLayers.Geometry.Point(lon, lat);
         var feature = new OpenLayers.Feature.Vector(project_to_map(point));
-        layer.addFeatures([feature]);
+        node_layer.addFeatures([feature]);
         node_map[node.attr('id')] = feature;
     });
 
@@ -79,7 +83,7 @@ function display_osm(osm_doc, layer) {
             line_string.addComponent(node_feature.geometry);
         });
         var feature = new OpenLayers.Feature.Vector(line_string);
-        layer.addFeatures([feature]);
+        way_layer.addFeatures([feature]);
     });
 }
 
