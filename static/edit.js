@@ -138,9 +138,11 @@ L.NodeEditor = function(node) {
         $('> tag', self.node).remove();
         $('tr.tag', self.box).each(function() {
             var key = $('input[name=key]', this).val();
-            var val = $('input[name=value]', this).val();
-            var tag = $(L.xml_node('tag')).attr({k: key, v: val});
-            self.node.append(tag);
+            var value = $('input[name=value]', this).val();
+            if(key && value) {
+                var tag = $(L.xml_node('tag')).attr({k: key, v: value});
+                self.node.append(tag);
+            }
         });
     };
 
