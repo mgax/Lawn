@@ -38,20 +38,20 @@ L.EditingContext = function(map) {
             console.log('relations: ' + $('osm > relation', data).length);
             self.map.addLayers([self.node_layer, self.way_layer]);
             self.display_osm(data);
-            self.edit_control = new OpenLayers.Control.ModifyFeature(self.node_layer);
-            self.node_layer.events.on({
-                'beforefeaturemodified': function(e) {
+            self.select_control = new OpenLayers.Control.SelectFeature(self.node_layer);
+            self.select_control.events.on({
+                'featurehighlighted': function(e) {
                     self.node_editor = L.NodeEditor(e.feature.osm_node);
                     self.node_editor.on('close', function() {
                         self.node_editor = null;
                     });
                 },
-                'afterfeaturemodified': function(e) {
+                'featureunhighlighted': function(e) {
                     if(self.node_editor) self.node_editor.close();
                 }
             });
-            self.map.addControl(self.edit_control);
-            self.edit_control.activate();
+            self.map.addControl(self.select_control);
+            self.select_control.activate();
         });
     });
     L.message("Select area then click ", download_button);
