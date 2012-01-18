@@ -41,10 +41,13 @@ L.EditingContext = function(map) {
             self.edit_control = new OpenLayers.Control.ModifyFeature(self.node_layer);
             self.node_layer.events.on({
                 'beforefeaturemodified': function(e) {
-                    self.node_editor($(e.feature.osm_node));
+                    self.node_editor = L.NodeEditor(e.feature.osm_node);
+                    self.node_editor.on('close', function() {
+                        self.node_editor = null;
+                    });
                 },
                 'afterfeaturemodified': function(e) {
-                    if(self.NE) self.NE.close();
+                    if(self.node_editor) self.node_editor.close();
                 }
             });
             self.map.addControl(self.edit_control);
@@ -79,14 +82,19 @@ L.EditingContext = function(map) {
         });
     };
 
-    self.node_editor = function(node) {
-        var NE = self.NE = {};
-        NE.form = $('<div class="node-tags">').insertAfter($('#menu'));
-        NE.form.append('node ' + node.attr('id'));
-        NE.close = function() {
-            self.NE = null;
-            NE.form.remove();
-        };
+    return self;
+};
+
+L.NodeEditor = function(node) {
+    var self = {};
+
+    self.dispatch = L.Dispatch(self);
+
+    self.form = $('<div class="node-tags">').insertAfter($('#menu'));
+    self.form.append('node ' + $(node).attr('id'));
+    self.close = function() {
+        self.form.remove();
+        self.dispatch({type: 'close'});
     };
 
     return self;
