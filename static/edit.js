@@ -100,7 +100,7 @@ L.NodeEditor = function(node) {
     self.dispatch = L.Dispatch(self);
 
     self.box = $('<div class="node-properties">').insertAfter($('#menu'));
-    self.box.append('node ' + self.node.attr('id'));
+
     self.box.append($('<div class="button-box">').append(
         '[',
         $('<a href="#" class="close button">').click(function(evt) {
@@ -109,14 +109,30 @@ L.NodeEditor = function(node) {
         }).text('x'),
         ']'
     ));
+    $('<div>').append('node ' + self.node.attr('id')).appendTo(self.box);
+
     var tag_table = $('<table class="node-tags">').appendTo(self.box);
     tag_table.html('<thead><tr><th>Key</th><th>Value</th></tr></thead>');
+
+    function new_tag_row(key, value) {
+        var key_input = $('<td>').append($('<input name="key">').val(key));
+        var val_input = $('<td>').append($('<input name="value">').val(value));
+        $('<tr class="tag">').appendTo(tag_table).append(key_input, val_input);
+    }
+
     $('> tag', self.node).each(function() {
         var tag = $(this);
-        var key_input = $('<td>').append($('<input name="key">').val(tag.attr('k')));
-        var val_input = $('<td>').append($('<input name="value">').val(tag.attr('v')));
-        $('<tr class="tag">').appendTo(tag_table).append(key_input, val_input);
+        new_tag_row(tag.attr('k'), tag.attr('v'));
     });
+
+    self.box.append($('<div>').append(
+        '[',
+        $('<a href="#" class="new button">').click(function(evt) {
+            evt.preventDefault();
+            new_tag_row('', '');
+        }).text('new tag'),
+        ']'
+    ));
 
     self.save = function() {
         $('> tag', self.node).remove();

@@ -53,3 +53,7 @@ body,
 a.button.close {
     color: red;
 }
+
+a.button.new {
+    color: green;
+}
