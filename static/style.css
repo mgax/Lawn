@@ -18,7 +18,7 @@ body,
     border-bottom-left-radius: 5px;
 }
 
-.node-tags {
+.node-properties {
     z-index: 1100;
     position: absolute;
     top: 50px;

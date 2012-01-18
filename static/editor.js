@@ -85,15 +85,25 @@ L.EditingContext = function(map) {
     return self;
 };
 
-L.NodeEditor = function(node) {
-    var self = {};
+L.NodeEditor = function(xml_node) {
+    var self = {node: $(xml_node)};
 
     self.dispatch = L.Dispatch(self);
 
-    self.form = $('<div class="node-tags">').insertAfter($('#menu'));
-    self.form.append('node ' + $(node).attr('id'));
+    self.box = $('<div class="node-properties">').insertAfter($('#menu'));
+    self.box.append('node ' + self.node.attr('id'));
+    var tag_table = $('<table class="node-tags">').appendTo(self.box);
+    tag_table.html('<thead><tr><th>Key</th><th>Value</th></tr></thead>');
+    $('> tag', self.node).each(function() {
+        console.log(this);
+        var tag = $(this);
+        var key_input = $('<td>').append($('<input name="key">').val(tag.attr('k')));
+        var val_input = $('<td>').append($('<input name="value">').val(tag.attr('v')));
+        $('<tr>').appendTo(tag_table).append(key_input, val_input);
+    });
+
     self.close = function() {
-        self.form.remove();
+        self.box.remove();
         self.dispatch({type: 'close'});
     };
 
