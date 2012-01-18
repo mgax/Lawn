@@ -87,6 +87,8 @@ L.EditingContext = function(map) {
     return self;
 };
 
+var blank_tag = $($.parseXML('<tag/>').firstChild);
+
 L.NodeEditor = function(xml_node) {
     var self = {node: $(xml_node)};
 
@@ -105,14 +107,24 @@ L.NodeEditor = function(xml_node) {
     var tag_table = $('<table class="node-tags">').appendTo(self.box);
     tag_table.html('<thead><tr><th>Key</th><th>Value</th></tr></thead>');
     $('> tag', self.node).each(function() {
-        console.log(this);
         var tag = $(this);
         var key_input = $('<td>').append($('<input name="key">').val(tag.attr('k')));
         var val_input = $('<td>').append($('<input name="value">').val(tag.attr('v')));
-        $('<tr>').appendTo(tag_table).append(key_input, val_input);
+        $('<tr class="tag">').appendTo(tag_table).append(key_input, val_input);
     });
 
+    self.save = function() {
+        $('> tag', self.node).remove();
+        $('tr.tag', self.box).each(function() {
+            var key = $('input[name=key]', this).val();
+            var val = $('input[name=value]', this).val();
+            var tag = blank_tag.clone().attr({k: key, v: val});
+            self.node.append(tag);
+        });
+    };
+
     self.close = function() {
+        self.save();
         self.box.remove();
         self.dispatch({type: 'close'});
     };
