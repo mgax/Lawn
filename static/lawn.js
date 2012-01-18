@@ -36,7 +36,7 @@ $(document).ready(function() {
     var edit_button = $('<a href="#" class="button">').text('edit');
     edit_button.appendTo(menu_div).click(function(evt) {
         evt.preventDefault();
-        L.EC = L.editing_context(L.map);
+        L.EC = L.EditingContext(L.map);
     });
 });
 
