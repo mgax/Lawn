@@ -45,3 +45,11 @@ body,
 #message.visible {
     display: table;
 }
+
+.button-box {
+    float: right;
+}
+
+a.button.close {
+    color: red;
+}

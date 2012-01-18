@@ -41,9 +41,11 @@ L.EditingContext = function(map) {
             self.select_control = new OpenLayers.Control.SelectFeature(self.node_layer);
             self.select_control.events.on({
                 'featurehighlighted': function(e) {
-                    self.node_editor = L.NodeEditor(e.feature.osm_node);
+                    var feature = e.feature;
+                    self.node_editor = L.NodeEditor(feature.osm_node);
                     self.node_editor.on('close', function() {
                         self.node_editor = null;
+                        self.select_control.unselect(feature);
                     });
                 },
                 'featureunhighlighted': function(e) {
@@ -92,6 +94,14 @@ L.NodeEditor = function(xml_node) {
 
     self.box = $('<div class="node-properties">').insertAfter($('#menu'));
     self.box.append('node ' + self.node.attr('id'));
+    self.box.append($('<div class="button-box">').append(
+        '[',
+        $('<a href="#" class="close button">').click(function(evt) {
+            evt.preventDefault();
+            self.close();
+        }).text('x'),
+        ']'
+    ));
     var tag_table = $('<table class="node-tags">').appendTo(self.box);
     tag_table.html('<thead><tr><th>Key</th><th>Value</th></tr></thead>');
     $('> tag', self.node).each(function() {
