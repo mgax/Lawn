@@ -87,10 +87,13 @@ L.EditingContext = function(map) {
     return self;
 };
 
-var blank_tag = $($.parseXML('<tag/>').firstChild);
+L.xml_node = function(tag_name) {
+    return $.parseXML('<' + tag_name + '/>').firstChild;
+};
 
-L.NodeEditor = function(xml_node) {
-    var self = {node: $(xml_node)};
+
+L.NodeEditor = function(node) {
+    var self = {node: $(node)};
 
     self.dispatch = L.Dispatch(self);
 
@@ -118,7 +121,7 @@ L.NodeEditor = function(xml_node) {
         $('tr.tag', self.box).each(function() {
             var key = $('input[name=key]', this).val();
             var val = $('input[name=value]', this).val();
-            var tag = blank_tag.clone().attr({k: key, v: val});
+            var tag = $(L.xml_node('tag')).attr({k: key, v: val});
             self.node.append(tag);
         });
     };
