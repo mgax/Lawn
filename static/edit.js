@@ -33,6 +33,8 @@ L.EditingContext = function(map) {
         var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
         console.log('downloading...', bbox);
         L.download(bbox).done(function(data) {
+            self.current_data = $('osm', data);
+            self.original_data = self.current_data.clone();
             console.log('nodes: ' + $('osm > node', data).length);
             console.log('ways: ' + $('osm > way', data).length);
             console.log('relations: ' + $('osm > relation', data).length);
