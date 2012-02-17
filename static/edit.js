@@ -130,6 +130,14 @@ L.NodeEditor = function(node) {
         ']'
     ));
     $('<div>').append('node ' + self.node.attr('id')).appendTo(self.box);
+    $('<div>').append('lat: <span class="node-lat">').appendTo(self.box);
+    $('<div>').append('lat: <span class="node-lon">').appendTo(self.box);
+
+    function display_position() {
+        $('span.node-lat', self.box).text(self.node.attr('lat'));
+        $('span.node-lon', self.box).text(self.node.attr('lon'));
+    }
+    display_position();
 
     var tag_table = $('<table class="node-tags">').appendTo(self.box);
     tag_table.html('<thead><tr><th>Key</th><th>Value</th></tr></thead>');
@@ -173,8 +181,9 @@ L.NodeEditor = function(node) {
     };
 
     self.update_position = function(new_position) {
-        console.log("new position for node " + self.node.attr('id') + ":",
-                    new_position.x, new_position.y);
+        self.node.attr('lat', new_position.x);
+        self.node.attr('lon', new_position.y);
+        display_position();
     };
 
     return self;
