@@ -54,7 +54,10 @@ L.xml_diff = function(osm1, osm2) {
 
 
 function node_changed(node1, node2) {
-    // TODO check lat, lon
+    if( ($(node1).attr('lon') != $(node2).attr('lon')) ||
+        ($(node1).attr('lat') != $(node2).attr('lat')) ) {
+        return true;
+    }
     var has_changed = false;
     var tags1 = {};
     var n1 = 0, n2 = 0;
