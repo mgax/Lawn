@@ -46,6 +46,14 @@ L.EditingContext = function(map) {
             self.map.addControl(self.modify_control);
             self.modify_control.activate();
 
+            self.node_layer.events.on({
+                'featuremodified': function(evt) {
+                    var feature = evt.feature;
+                    var new_position = L.project_from_map(feature.geometry.clone());
+                    self.node_editor.update_position(new_position);
+                }
+            });
+
             self.select_control = new OpenLayers.Control.SelectFeature(
                 self.node_layer,
                 {
@@ -162,6 +170,11 @@ L.NodeEditor = function(node) {
         self.save();
         self.box.remove();
         self.dispatch({type: 'close'});
+    };
+
+    self.update_position = function(new_position) {
+        console.log("new position for node " + self.node.attr('id') + ":",
+                    new_position.x, new_position.y);
     };
 
     return self;
