@@ -40,7 +40,19 @@ L.EditingContext = function(map) {
             console.log('relations: ' + $('osm > relation', data).length);
             self.map.addLayers([self.node_layer, self.way_layer]);
             self.display_osm(data);
-            self.select_control = new OpenLayers.Control.SelectFeature(self.node_layer);
+            self.modify_control = new OpenLayers.Control.ModifyFeature(
+                self.node_layer,
+                {standalone: true});
+            self.map.addControl(self.modify_control);
+            self.modify_control.activate();
+
+            self.select_control = new OpenLayers.Control.SelectFeature(
+                self.node_layer,
+                {
+                    onSelect: self.modify_control.selectFeature,
+                    onUnselect: self.modify_control.unselectFeature,
+                    scope: self.modify_control
+                });
             self.select_control.events.on({
                 'featurehighlighted': function(e) {
                     var feature = e.feature;
