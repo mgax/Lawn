@@ -21,10 +21,9 @@ def download():
 
 
 def create_app():
-    app = flask.Flask(__name__)
+    app = flask.Flask(__name__, instance_relative_config=True)
     app.register_blueprint(webpages)
-    if 'APP_SETTINGS' in os.environ:
-        app.config.from_envvar('APP_SETTINGS')
+    app.config.from_pyfile('settings.py', silent=True)
     if 'OPENLAYERS_SRC' in app.config:
         from werkzeug.wsgi import SharedDataMiddleware
         app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
