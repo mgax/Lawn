@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="CGImap 0.0.2">
+ <bounds minlat="44.4727148" minlon="26.0760455" maxlat="44.4772852" maxlon="26.0879545"/>
+ <node id="982750765" lat="44.3832335" lon="26.0432365" user="filipok" uid="99148" visible="true" version="2" changeset="7126532" timestamp="2011-01-29T19:56:06Z"/>
+ <node id="982752568" lat="44.48" lon="25.9985050" user="Romania CLC import bot" uid="358072" visible="true" version="1" changeset="6322901" timestamp="2010-11-08T20:01:29Z"/>
+ <node id="982746737" lat="44.4841150" lon="26.15" user="Romania CLC import bot" uid="358072" visible="true" version="1" changeset="6322901" timestamp="2010-11-08T19:56:01Z"/>
+ <node id="982748412" lat="44.4542690" lon="26.1589810" user="Romania CLC import bot" uid="358072" visible="true" version="1" changeset="6322901" timestamp="2010-11-08T19:57:03Z"/>
+ <node id="982748470" lat="44.4638310" lon="26.1632480" user="Romania CLC import bot" uid="358072" visible="true" version="1" changeset="6322901" timestamp="2010-11-08T19:57:15Z"/>
+ <way id="99186328" user="Zatarra" uid="163981" visible="true" version="1" changeset="7255441" timestamp="2011-02-11T13:54:16Z">
+  <nd ref="982748470"/>
+  <nd ref="982750765"/>
+  <nd ref="982746737"/>
+  <tag k="highway" v="footway"/>
+ </way>
+</osm>
