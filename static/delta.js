@@ -18,7 +18,7 @@ L.xml_diff = function(osm1, osm2) {
         var node2 = $(this);
         var id = node2.attr('id');
         var node1 = nodes1[id];
-        if(nodes1 == null) {
+        if(! node1) {
             nodes_create.push(node2);
         }
         else if(node_changed(node1, node2)) {
