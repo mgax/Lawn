@@ -44,6 +44,7 @@ L.xml_diff_test = function() {
     run_test('node_delete');
     run_test('node_move');
     run_test('node_add_tag');
+    run_test('node_change_tag');
 }
 
 
