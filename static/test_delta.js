@@ -40,6 +40,7 @@ function run_test(name) {
 
 L.xml_diff_test = function() {
     run_test('no_change');
+    run_test('node_create');
 }
 
 
