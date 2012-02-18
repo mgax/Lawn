@@ -4,9 +4,21 @@
 function get_test_xml(name) {
     var deferred = $.Deferred();
     $.get('static/test_delta_data/' + name, function(data) {
-        deferred.resolve($(data)[2]);
+        var root_node = null;
+        if(data) {
+            var root_node = $.parseXML(data.replace(/>\s+</g, '><')).firstChild;
+            $('*', root_node).each(function(i, node) {
+                node.namespaceURI = "";
+            });
+        }
+        deferred.resolve(root_node);
     });
     return deferred;
+}
+
+
+function serialize(xml_node) {
+    return new XMLSerializer().serializeToString(xml_node);
 }
 
 
@@ -16,11 +28,11 @@ function run_test(name) {
            get_test_xml(name + '/e.osmchange')
            ).done(function(a, b, expected) {
         var diff = L.xml_diff(a, b);
-        var same = (diff == expected);
-        console.log(name, (same ? 'ok' : 'error'));
-        if(! same) {
-            console.log(name, 'result', diff);
-            console.log(name, 'expect', expected);
+        if(serialize(diff) != serialize(expected)) {
+            console.log(name, 'fail', diff, expected);
+        }
+        else {
+            console.log(name, 'ok');
         }
     });
 }

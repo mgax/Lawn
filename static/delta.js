@@ -51,7 +51,7 @@ L.xml_diff = function(osm1, osm2) {
     if(delta.firstChild == null) {
         return null;
     }
-    return delta.parentNode; // return an XML Document object
+    return delta;
 };
 
 
