@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osmChange>
+  <create>
+    <way id="99186328" user="Zatarra" uid="163981" visible="true" version="1" changeset="7255441" timestamp="2011-02-11T13:54:16Z">
+     <nd ref="982748470"/>
+     <nd ref="982750765"/>
+     <nd ref="982746737"/>
+     <tag k="highway" v="footway"/>
+    </way>
+  </create>
+</osmChange>

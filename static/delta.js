@@ -30,6 +30,19 @@ L.xml_diff = function(osm1, osm2) {
         delta_delete.push($(this));
     });
 
+    var ways1 = {};
+    $('> way', osm1).each(function() {
+        ways1[$(this).attr('id')] = this;
+    });
+    $('> way', osm2).each(function() {
+        var way2 = $(this);
+        var id = way2.attr('id');
+        var way1 = ways1[id];
+        if(! way1) {
+            delta_create.push(way2);
+        }
+    });
+
     var delta = L.xml_node('osmChange');
 
     function add_delta_bag(parent_node, name, list) {
