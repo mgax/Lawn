@@ -77,6 +77,12 @@ L.EditingContext = function(map) {
                     self.node_editor.on('remove', function() {
                         var node = feature.osm_node
                         self.node_layer.eraseFeatures([feature]);
+                        var way_features = $(node).data('view-ways');
+                        self.way_layer.eraseFeatures(way_features);
+                        $.each(way_features, function(i, way_feature) {
+                            way_feature.geometry.removeComponent(feature.geometry);
+                            self.way_layer.drawFeature(way_feature);
+                        });
                     });
                 },
                 'featureunhighlighted': function(e) {
