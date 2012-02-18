@@ -6,29 +6,28 @@
 L.xml_diff = function(osm1, osm2) {
     // TODO set `changeset` and `version` attributes for each node
 
+    var delta_create = [];
+    var delta_modify = [];
+    var delta_delete = [];
+
     var nodes1 = {};
     $('> node', osm1).each(function() {
         nodes1[$(this).attr('id')] = this;
     });
-
-    var nodes_create = [];
-    var nodes_modify = [];
-    var nodes_delete = [];
     $('> node', osm2).each(function() {
         var node2 = $(this);
         var id = node2.attr('id');
         var node1 = nodes1[id];
         if(! node1) {
-            nodes_create.push(node2);
+            delta_create.push(node2);
         }
         else if(node_changed(node1, node2)) {
-            nodes_modify.push(node2);
+            delta_modify.push(node2);
         }
         delete nodes1[id];
     });
-
     $.each(nodes1, function() {
-        nodes_delete.push($(this));
+        delta_delete.push($(this));
     });
 
     var delta = L.xml_node('osmChange');
@@ -44,9 +43,9 @@ L.xml_diff = function(osm1, osm2) {
         });
     }
 
-    add_delta_bag(delta, 'create', nodes_create);
-    add_delta_bag(delta, 'modify', nodes_modify);
-    add_delta_bag(delta, 'delete', nodes_delete);
+    add_delta_bag(delta, 'create', delta_create);
+    add_delta_bag(delta, 'modify', delta_modify);
+    add_delta_bag(delta, 'delete', delta_delete);
 
     if(delta.firstChild == null) {
         return null;
