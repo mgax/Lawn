@@ -50,7 +50,8 @@ body,
     float: right;
 }
 
-a.button.close {
+a.button.close,
+a.button.delete {
     color: red;
 }
 

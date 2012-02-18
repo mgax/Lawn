@@ -171,6 +171,11 @@ L.NodeEditor = function(node) {
             evt.preventDefault();
             new_tag_row('', '');
         }).text('new tag'),
+        '] [',
+        $('<a href="#" class="delete button">').click(function(evt) {
+            evt.preventDefault();
+            self.delete();
+        }).text('delete node'),
         ']'
     ));
 
@@ -196,6 +201,11 @@ L.NodeEditor = function(node) {
         self.node.attr('lat', new_position.x);
         self.node.attr('lon', new_position.y);
         display_position();
+    };
+
+    self.delete = function() {
+        self.close()
+        self.node.remove();
     };
 
     return self;
