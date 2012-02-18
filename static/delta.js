@@ -1,5 +1,7 @@
 (function(L) {
 
+// http://wiki.openstreetmap.org/wiki/OsmChange
+
 
 L.xml_diff = function(osm1, osm2) {
     // TODO set `changeset` and `version` attributes for each node
