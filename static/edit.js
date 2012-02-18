@@ -74,6 +74,10 @@ L.EditingContext = function(map) {
                         self.node_editor = null;
                         self.select_control.unselect(feature);
                     });
+                    self.node_editor.on('remove', function() {
+                        var node = feature.osm_node
+                        self.node_layer.eraseFeatures([feature]);
+                    });
                 },
                 'featureunhighlighted': function(e) {
                     if(self.node_editor) self.node_editor.close();
@@ -205,6 +209,7 @@ L.NodeEditor = function(node) {
 
     self.delete = function() {
         self.close()
+        self.dispatch({type: 'remove'});
         self.node.remove();
     };
 
