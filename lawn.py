@@ -20,6 +20,11 @@ def download():
         raise NotImplementedError
 
 
+@webpages.route('/test_delta')
+def test_delta():
+    return flask.render_template('test_delta.html')
+
+
 def create_app():
     app = flask.Flask(__name__, instance_relative_config=True)
     app.register_blueprint(webpages)

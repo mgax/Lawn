@@ -1,0 +1,11 @@
+<script src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+{% set openlayers_js = 'openlayers/lib/OpenLayers.js'
+                       if config['OPENLAYERS_SRC'] else
+                       'openlayers/OpenLayers.js' %}
+<script src="{{ url_for('static', filename=openlayers_js) }}"></script>
+<script src="{{ url_for('static', filename='lawn.js') }}"></script>
+<script src="{{ url_for('static', filename='delta.js') }}"></script>
+<script src="{{ url_for('static', filename='test_delta.js') }}"></script>
+<script>$(function() {
+    L.xml_diff_test();
+});</script>
