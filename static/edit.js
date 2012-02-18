@@ -51,6 +51,11 @@ L.EditingContext = function(map) {
                     var feature = evt.feature;
                     var new_position = L.project_from_map(feature.geometry.clone());
                     self.node_editor.update_position(new_position);
+                    var way_features = $(feature.osm_node).data('view-ways');
+                    self.way_layer.eraseFeatures(way_features);
+                    $.each(way_features, function(i, feature) {
+                        self.way_layer.drawFeature(feature);
+                    });
                 }
             });
 
@@ -90,19 +95,26 @@ L.EditingContext = function(map) {
             var feature = new OpenLayers.Feature.Vector(L.project_to_map(point));
             feature.osm_node = this;
             self.node_layer.addFeatures([feature]);
-            self.node_map[node.attr('id')] = feature;
+            self.node_map[node.attr('id')] = node;
+            node.data('view-feature', feature);
+            node.data('view-ways', []);
         });
 
         $('osm > way', osm_doc).each(function() {
             var way = $(this);
             var line_string = new OpenLayers.Geometry.LineString();
             $('> nd', way).each(function() {
-                var node_feature = self.node_map[$(this).attr('ref')];
+                var node = self.node_map[$(this).attr('ref')];
+                var node_feature = $(node).data('view-feature');
                 line_string.addComponent(node_feature.geometry);
             });
             var feature = new OpenLayers.Feature.Vector(line_string);
             feature.osm_way = this;
             self.way_layer.addFeatures([feature]);
+            $('> nd', way).each(function() {
+                var node = self.node_map[$(this).attr('ref')];
+                $(node).data('view-ways').push(feature);
+            });
         });
     };
 
