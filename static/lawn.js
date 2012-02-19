@@ -28,8 +28,14 @@ L.hide_message = function() {
 
 L.xml_signature = "Lawn 0.0.1";
 
+L.serialize_xml = function(xml_root) {
+    xml_str = new XMLSerializer().serializeToString(xml_root);
+    return ('<?xml version="1.0" encoding="UTF-8" ?>\n' +
+            vkbeautify(xml_str, 'xml'));
+};
+
 L.xml_base64_data_url = function(xml_root) {
-    var unicode_data = new XMLSerializer().serializeToString(xml_root);
+    var unicode_data = L.serialize_xml(xml_root);
     var utf8_data = unescape(encodeURIComponent(unicode_data));
     var base64_data = 'base64,' + $.base64.encode(utf8_data);
     return 'data:application/x-openstreetmap+xml;' + base64_data;

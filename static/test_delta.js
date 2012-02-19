@@ -17,11 +17,6 @@ function get_test_xml(name) {
 }
 
 
-function serialize(xml_node) {
-    return new XMLSerializer().serializeToString(xml_node);
-}
-
-
 function run_test(name) {
     $.when(get_test_xml(name + '/a.osm'),
            get_test_xml(name + '/b.osm'),
@@ -29,7 +24,7 @@ function run_test(name) {
            ).done(function(a, b, expected) {
         var diff = L.xml_diff(a, b);
         $(diff).attr('generator', null);
-        if(serialize(diff) != serialize(expected)) {
+        if(L.serialize_xml(diff) != L.serialize_xml(expected)) {
             console.log(name, 'fail', diff, expected);
         }
         else {
