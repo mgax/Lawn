@@ -1,5 +1,6 @@
 import os
 import flask
+import flaskext.script
 from osm import OsmApi
 
 
@@ -42,7 +43,8 @@ def create_app():
     return app
 
 
+manager = flaskext.script.Manager(create_app)
+
+
 if __name__ == '__main__':
-    app = create_app()
-    host = app.config.get('LISTEN_HOST', '127.0.0.1')
-    app.run(host, debug=True)
+    manager.run()
