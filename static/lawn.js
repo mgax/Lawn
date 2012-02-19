@@ -53,7 +53,7 @@ L.download_xml = function(xml_root, filename) {
 $(document).ready(function() {
     L.map = new OpenLayers.Map('map');
     L.map.addLayer(new OpenLayers.Layer.OSM("OpenStreetMap"));
-    L.map.setCenter(L.project_to_map(new OpenLayers.LonLat(26.082, 44.475)), 16);
+    L.map.setCenter(L.project_to_map(new OpenLayers.LonLat(13.4055, 52.5219)), 13);
 
     var menu_div = $('#menu');
     var edit_button = $('<a href="#" class="button">').text('edit');
