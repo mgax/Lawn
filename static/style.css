@@ -18,7 +18,8 @@ body,
     border-bottom-left-radius: 5px;
 }
 
-.node-properties {
+.node-properties,
+.node-create {
     z-index: 1100;
     position: absolute;
     top: 50px;

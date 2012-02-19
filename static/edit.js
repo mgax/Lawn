@@ -19,6 +19,12 @@ L.EditingContext = function(map) {
     var box = new OpenLayers.Feature.Vector(bounds.toGeometry());
     self.download_layer.addFeatures([box]);
 
+    self._last_generated_id = 0;
+    self.generate_id = function() {
+        self._last_generated_id -= 1;
+        return self._last_generated_id;
+    };
+
     var download_button = $('<a href="#" class="button">').text('download');
     self.node_layer = new OpenLayers.Layer.Vector('Nodes', {});
     self.way_layer = new OpenLayers.Layer.Vector('Ways', {});
@@ -43,6 +49,12 @@ L.EditingContext = function(map) {
             console.log('relations: ' + $('osm > relation', data).length);
             self.map.addLayers([self.node_layer, self.way_layer]);
             self.display_osm(data);
+
+            self.node_create = L.NodeCreate();
+            self.node_create.on('create_node', function() {
+                console.log('create node!');
+            });
+
             self.modify_control = new OpenLayers.Control.ModifyFeature(
                 self.node_layer,
                 {standalone: true});
@@ -71,6 +83,7 @@ L.EditingContext = function(map) {
                 });
             self.select_control.events.on({
                 'featurehighlighted': function(e) {
+                    self.node_create.hide();
                     var feature = e.feature;
                     self.node_editor = L.NodeEditor(feature.osm_node);
                     self.node_editor.on('close', function() {
@@ -90,6 +103,7 @@ L.EditingContext = function(map) {
                 },
                 'featureunhighlighted': function(e) {
                     if(self.node_editor) self.node_editor.close();
+                    self.node_create.show();
                 }
             });
             self.map.addControl(self.select_control);
@@ -220,6 +234,34 @@ L.NodeEditor = function(node) {
         self.close()
         self.dispatch({type: 'remove'});
         self.node.remove();
+    };
+
+    return self;
+};
+
+
+L.NodeCreate = function() {
+    var self = {};
+
+    self.dispatch = L.Dispatch(self);
+
+    self.box = $('<div class="node-properties">').insertAfter($('#menu'));
+
+    self.box.append($('<div>').append(
+        '[',
+        $('<a href="#" class="new button">').click(function(evt) {
+            evt.preventDefault();
+            self.dispatch({type: 'create_node'});
+        }).text('create node'),
+        ']'
+    ));
+
+    self.show = function() {
+        self.box.show();
+    };
+
+    self.hide = function() {
+        self.box.hide();
     };
 
     return self;
