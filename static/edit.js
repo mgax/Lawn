@@ -39,8 +39,8 @@ L.EditingContext = function(map) {
         var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
         console.log('downloading...', bbox);
         L.download(bbox).done(function(data) {
-            self.current_data = $('osm', data);
-            self.original_data = self.current_data.clone();
+            self.current_data = $('osm', data)[0];
+            self.original_data = $(self.current_data).clone()[0];
             self.node_map = {};
             self.diff = function() {
                 return L.xml_diff(self.original_data, self.current_data);
@@ -64,7 +64,7 @@ L.EditingContext = function(map) {
                     id: self.generate_id(),
                     version: 1
                 });
-                self.current_data.append(node);
+                $(self.current_data).append(node);
                 self.display_osm_node(node, feature);
                 self.draw_node_control.deactivate();
                 self.select_control.activate();
