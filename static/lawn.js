@@ -26,6 +26,13 @@ L.hide_message = function() {
     $('#message').removeClass('visible');
 };
 
+L.xml_base64_data_url = function(xml_root) {
+    var unicode_data = new XMLSerializer().serializeToString(xml_root);
+    var utf8_data = unescape(encodeURIComponent(unicode_data));
+    var base64_data = 'base64,' + $.base64.encode(utf8_data);
+    return 'data:application/x-openstreetmap+xml;' + base64_data;
+};
+
 
 $(document).ready(function() {
     L.map = new OpenLayers.Map('map');
