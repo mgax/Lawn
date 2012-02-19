@@ -59,8 +59,8 @@ L.EditingContext = function(map) {
                 var coords = L.project_from_map(feature.geometry.clone());
                 var node = L.xml_node('node');
                 $(node).attr({
-                    lat: coords.x,
-                    lon: coords.y,
+                    lon: coords.x,
+                    lat: coords.y,
                     id: self.generate_id(),
                     version: 1
                 });
@@ -259,8 +259,8 @@ L.NodeEditor = function(node) {
     };
 
     self.update_position = function(new_position) {
-        self.node.attr('lat', new_position.x);
-        self.node.attr('lon', new_position.y);
+        self.node.attr('lon', new_position.x);
+        self.node.attr('lat', new_position.y);
         display_position();
     };
 
