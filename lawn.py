@@ -38,8 +38,13 @@ def create_app():
     if 'OPENLAYERS_SRC' in app.config:
         from werkzeug.wsgi import SharedDataMiddleware
         app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
-            '/static/openlayers': app.config['OPENLAYERS_SRC'],
+            '/openlayers-src': app.config['OPENLAYERS_SRC'],
         })
+        app.config['OPENLAYERS_JS'] = '/openlayers-src/lib/OpenLayers.js'
+    else:
+        with app.test_request_context():
+            app.config['OPENLAYERS_JS'] = flask.url_for('static',
+                filename='lib/openlayers/OpenLayers.js')
     return app
 
 
