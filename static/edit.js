@@ -3,6 +3,9 @@
 
 L.EditingContext = function(map) {
     var self = {map: map};
+
+    self.dispatch = L.Dispatch(self);
+
     self.download_layer = new OpenLayers.Layer.Vector('Edit', {});
     self.map.addLayer(self.download_layer);
 
@@ -37,7 +40,6 @@ L.EditingContext = function(map) {
         self.map.removeLayer(self.download_layer);
         var b = L.project_from_map(box.geometry.bounds);
         var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
-        console.log('downloading...', bbox);
         L.download(bbox).done(function(data) {
             self.current_data = $('osm', data)[0];
             self.original_data = $(self.current_data).clone()[0];
@@ -45,9 +47,7 @@ L.EditingContext = function(map) {
             self.diff = function() {
                 return L.xml_diff(self.original_data, self.current_data);
             };
-            console.log('nodes: ' + $('osm > node', data).length);
-            console.log('ways: ' + $('osm > way', data).length);
-            console.log('relations: ' + $('osm > relation', data).length);
+            self.dispatch({type: 'osm_loaded'});
             self.map.addLayers([self.node_layer, self.way_layer]);
             self.display_osm(data);
 

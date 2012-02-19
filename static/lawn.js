@@ -33,6 +33,14 @@ L.xml_base64_data_url = function(xml_root) {
     return 'data:application/x-openstreetmap+xml;' + base64_data;
 };
 
+L.download_xml = function(xml_root, filename) {
+    var url = L.xml_base64_data_url(xml_root);
+    L.message(
+        'Right-click, choose "Save Link As...", and type "' + filename + '": ',
+        $('<a>').text(filename).attr('href', url)
+    );
+};
+
 
 $(document).ready(function() {
     L.map = new OpenLayers.Map('map');
@@ -44,6 +52,22 @@ $(document).ready(function() {
     edit_button.appendTo(menu_div).click(function(evt) {
         evt.preventDefault();
         L.EC = L.EditingContext(L.map);
+        edit_button.hide();
+        L.EC.on('osm_loaded', function() {
+            $('<div>').append(
+                'download [',
+                $('<a href="#" class="download button">').click(function(evt) {
+                    evt.preventDefault();
+                    L.download_xml(L.EC.current_data, 'layer.osm');
+                }).text('layer'),
+                '], [',
+                $('<a href="#" class="download button">').click(function(evt) {
+                    evt.preventDefault();
+                    L.download_xml(L.EC.diff(), 'diff.osc');
+                }).text('diff'),
+                ']'
+            ).appendTo(menu_div);
+        });
     });
 });
 
