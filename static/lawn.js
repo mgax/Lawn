@@ -26,6 +26,8 @@ L.hide_message = function() {
     $('#message').removeClass('visible');
 };
 
+L.xml_signature = "Lawn 0.0.1";
+
 L.xml_base64_data_url = function(xml_root) {
     var unicode_data = new XMLSerializer().serializeToString(xml_root);
     var utf8_data = unescape(encodeURIComponent(unicode_data));

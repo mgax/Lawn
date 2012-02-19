@@ -51,7 +51,10 @@ L.xml_diff = function(osm1, osm2) {
     });
 
     var delta = L.xml_node('osmChange');
-    $(delta).attr('version', '0.6');
+    $(delta).attr({
+        version: '0.6',
+        generator: L.xml_signature
+    });
 
     function add_delta_bag(parent_node, name, list) {
         if(! list.length) {

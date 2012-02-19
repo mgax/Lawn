@@ -28,6 +28,7 @@ function run_test(name) {
            get_test_xml(name + '/e.osmchange')
            ).done(function(a, b, expected) {
         var diff = L.xml_diff(a, b);
+        $(diff).attr('generator', null);
         if(serialize(diff) != serialize(expected)) {
             console.log(name, 'fail', diff, expected);
         }

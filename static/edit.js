@@ -41,15 +41,16 @@ L.EditingContext = function(map) {
         var b = L.project_from_map(box.geometry.bounds);
         var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
         L.download(bbox).done(function(data) {
-            self.current_data = $('osm', data)[0];
-            self.original_data = $(self.current_data).clone()[0];
+            self.original_data = $('osm', data)[0];
+            self.current_data = $(self.original_data).clone()[0];
+            $(self.current_data).attr('generator', L.xml_signature);
             self.node_map = {};
             self.diff = function() {
                 return L.xml_diff(self.original_data, self.current_data);
             };
             self.dispatch({type: 'osm_loaded'});
             self.map.addLayers([self.node_layer, self.way_layer]);
-            self.display_osm(data);
+            self.display_osm(self.current_data);
 
             self.draw_node_control = new OpenLayers.Control.DrawFeature(
                 self.node_layer, OpenLayers.Handler.Point);
@@ -170,11 +171,11 @@ L.EditingContext = function(map) {
     };
 
     self.display_osm = function(osm_doc) {
-        $('osm > node', osm_doc).each(function() {
+        $('> node', osm_doc).each(function() {
             self.display_osm_node(this);
         });
 
-        $('osm > way', osm_doc).each(function() {
+        $('> way', osm_doc).each(function() {
             self.display_osm_way(this);
         });
     };
