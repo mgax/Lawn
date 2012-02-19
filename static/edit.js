@@ -65,10 +65,17 @@ L.EditingContext = function(map) {
                     version: 1
                 });
                 self.current_data.append(node);
+                self.display_osm_node(node, feature);
+                self.draw_node_control.deactivate();
+                self.select_control.activate();
+                self.modify_control.activate();
+                self.select_control.select(feature);
             });
 
             self.node_create = L.NodeCreate();
             self.node_create.on('create_node', function() {
+                self.select_control.deactivate();
+                self.modify_control.deactivate();
                 self.draw_node_control.activate();
             });
 
