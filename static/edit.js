@@ -50,9 +50,25 @@ L.EditingContext = function(map) {
             self.map.addLayers([self.node_layer, self.way_layer]);
             self.display_osm(data);
 
+            self.draw_node_control = new OpenLayers.Control.DrawFeature(
+                self.node_layer, OpenLayers.Handler.Point);
+            self.map.addControl(self.draw_node_control);
+            self.draw_node_control.events.register('featureadded', null, function(evt) {
+                var feature = evt.feature;
+                var coords = L.project_from_map(feature.geometry.clone());
+                var node = L.xml_node('node');
+                $(node).attr({
+                    lat: coords.x,
+                    lon: coords.y,
+                    id: self.generate_id(),
+                    version: 1
+                });
+                self.current_data.append(node);
+            });
+
             self.node_create = L.NodeCreate();
             self.node_create.on('create_node', function() {
-                console.log('create node!');
+                self.draw_node_control.activate();
             });
 
             self.modify_control = new OpenLayers.Control.ModifyFeature(
