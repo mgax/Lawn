@@ -51,6 +51,10 @@ L.download_xml = function(xml_root, filename) {
 
 
 $(document).ready(function() {
+    setTimeout(L.initialize, 200); // fix weird openlayers layout behaviour
+});
+
+L.initialize = function() {
     L.map = new OpenLayers.Map('map');
     L.map.addLayer(new OpenLayers.Layer.OSM("OpenStreetMap"));
     L.map.setCenter(L.project_to_map(new OpenLayers.LonLat(13.4055, 52.5219)), 13);
@@ -77,7 +81,7 @@ $(document).ready(function() {
             ).appendTo(menu_div);
         });
     });
-});
+};
 
 
 })();
