@@ -1,0 +1,4 @@
+-r requirements.txt
+Fabric==1.4.0
+pycrypto==2.5
+ssh==1.7.13
