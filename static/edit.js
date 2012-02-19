@@ -35,6 +35,9 @@ L.EditingContext = function(map) {
         L.download(bbox).done(function(data) {
             self.current_data = $('osm', data);
             self.original_data = self.current_data.clone();
+            self.diff = function() {
+                return L.xml_diff(self.original_data, self.current_data);
+            };
             console.log('nodes: ' + $('osm > node', data).length);
             console.log('ways: ' + $('osm > way', data).length);
             console.log('relations: ' + $('osm > relation', data).length);
