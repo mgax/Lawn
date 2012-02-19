@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<osmChange>
+<osmChange version="0.6">
   <create>
     <node id="982752568" lat="44.4757380" lon="25.9985050" user="Romania CLC import bot" uid="358072" visible="true" version="1" changeset="6322901" timestamp="2010-11-08T20:01:29Z" />
   </create>
