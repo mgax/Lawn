@@ -6,3 +6,4 @@ chardet==1.0.1
 requests==0.10.2
 Flask-Script==0.3.1
 argparse==1.2.1
+flup==1.0.2

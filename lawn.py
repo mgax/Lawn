@@ -46,5 +46,25 @@ def create_app():
 manager = flaskext.script.Manager(create_app)
 
 
+def _error_log(error_log_path):
+    import logging
+    error_handler = logging.FileHandler(error_log_path)
+    log_fmt = logging.Formatter("[%(asctime)s] %(module)s "
+                                "%(levelname)s %(message)s")
+    error_handler.setFormatter(log_fmt)
+    error_handler.setLevel(logging.ERROR)
+    logging.getLogger().addHandler(error_handler)
+
+
+@manager.command
+def fcgi():
+    app = flask.current_app
+    _error_log(os.path.join(app.instance_path, 'error.log'))
+    from flup.server.fcgi import WSGIServer
+    sock_path = os.path.join(app.instance_path, 'fcgi.sock')
+    server = WSGIServer(app, bindAddress=sock_path, umask=0)
+    server.run()
+
+
 if __name__ == '__main__':
     manager.run()
