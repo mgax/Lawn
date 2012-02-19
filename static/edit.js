@@ -21,6 +21,7 @@ L.EditingContext = function(map) {
     var bounds = self.map.calculateBounds().scale(0.5);
     var box = new OpenLayers.Feature.Vector(bounds.toGeometry());
     self.download_layer.addFeatures([box]);
+    self.edit_control.selectControl.select(box);
 
     self._last_generated_id = 0;
     self.generate_id = function() {
