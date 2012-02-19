@@ -1,5 +1,11 @@
 import os
 import flask
+from osm import OsmApi
+
+
+DEFAULT_CONFIG = {
+    'OSM_API_URL': "http://api06.dev.openstreetmap.org/",
+}
 
 
 webpages = flask.Blueprint('webpages', __name__)
@@ -13,11 +19,9 @@ def home():
 @webpages.route('/download')
 def download():
     app = flask.current_app
-    if 'DEMO_FILE' in app.config:
-        osm_data = open(app.config['DEMO_FILE']).read()
-        return flask.Response(osm_data, mimetype='text/xml')
-    else:
-        raise NotImplementedError
+    bbox = flask.request.args['bbox']
+    osm_data = OsmApi(app.config['OSM_API_URL']).get_data(bbox)
+    return flask.Response(osm_data, mimetype='text/xml')
 
 
 @webpages.route('/test_delta')
@@ -28,6 +32,7 @@ def test_delta():
 def create_app():
     app = flask.Flask(__name__, instance_relative_config=True)
     app.register_blueprint(webpages)
+    app.config.update(DEFAULT_CONFIG)
     app.config.from_pyfile('settings.py', silent=True)
     if 'OPENLAYERS_SRC' in app.config:
         from werkzeug.wsgi import SharedDataMiddleware
