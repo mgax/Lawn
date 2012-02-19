@@ -38,5 +38,23 @@ def install():
         run("mkdir -p '%s'" % instance)
 
 
+def start():
+    run("/sbin/start-stop-daemon --start --background "
+        "--pidfile %(var)s/fcgi.pid --make-pidfile "
+        "--exec %(sandbox)s/bin/python %(repo)s/lawn.py fcgi"
+        % paths)
+
+
+def stop():
+    run("/sbin/start-stop-daemon --stop --retry 3 --oknodo "
+        "--pidfile %(var)s/fcgi.pid" % paths)
+
+
+def restart():
+    stop()
+    start()
+
+
 def deploy():
     install()
+    restart()
