@@ -281,16 +281,22 @@ L.NodeCreate = function() {
 
     self.box = $('<div class="node-properties">').insertAfter($('#menu'));
 
-    self.box.append($('<div>').append(
+    self.button_box = $('<div>').append(
         '[',
         $('<a href="#" class="new button">').click(function(evt) {
             evt.preventDefault();
+            self.button_box.hide();
+            self.message_box.show();
             self.dispatch({type: 'create_node'});
         }).text('create node'),
         ']'
-    ));
+    ).appendTo(self.box);
+
+    self.message_box = $('<div>').text("Click on map").appendTo(self.box).hide();
 
     self.show = function() {
+        self.message_box.hide();
+        self.button_box.show();
         self.box.show();
     };
 
