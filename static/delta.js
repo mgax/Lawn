@@ -41,6 +41,9 @@ L.xml_diff = function(osm1, osm2) {
         if(! way1) {
             delta_create.push(way2);
         }
+        else if(way_changed(way1, way2)) {
+            delta_modify.push(way2);
+        }
         delete ways1[id];
     });
     $.each(ways1, function() {
@@ -96,6 +99,16 @@ function node_changed(node1, node2) {
         has_changed = true;
     }
     return has_changed;
+}
+
+
+function way_changed(way1, way2) {
+    var nodes1 = '', nodes2 = '';
+    $('nd', way1).each(function(i, nd) { nodes1 += $(nd).attr('ref') + ','; });
+    $('nd', way2).each(function(i, nd) { nodes2 += $(nd).attr('ref') + ','; });
+    if(nodes1 != nodes2) {
+        return true;
+    }
 }
 
 
