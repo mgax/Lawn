@@ -1,7 +1,7 @@
 import os
 import flask
 import flaskext.script
-from osm import OsmApi
+import osm
 
 
 DEFAULT_CONFIG = {
@@ -21,7 +21,7 @@ def home():
 def download():
     app = flask.current_app
     bbox = flask.request.args['bbox']
-    osm_data = OsmApi(app.config['OSM_API_URL']).get_data(bbox)
+    osm_data = osm.OsmApi(app.config['OSM_API_URL']).get_data(bbox)
     return flask.Response(osm_data, mimetype='text/xml')
 
 
@@ -45,6 +45,8 @@ def create_app():
         with app.test_request_context():
             app.config['OPENLAYERS_JS'] = flask.url_for('static',
                 filename='lib/openlayers/OpenLayers.js')
+    app.config['OSM_API_URL'] = app.config['OSM_API_URL'].rstrip('/')
+    osm.initialize_app(app)
     return app
 
 
