@@ -49,6 +49,17 @@ L.download_xml = function(xml_root, filename) {
     );
 };
 
+L.api_upload = function(osm_diff) {
+    $.ajax('/upload_changeset', {
+        type: 'POST',
+        contentType: 'text/xml',
+        data: L.serialize_xml(osm_diff),
+        success: function(data) {
+            L.message(data);
+        }
+    });
+};
+
 
 $(document).ready(function() {
     setTimeout(L.initialize, 200); // fix weird openlayers layout behaviour
@@ -67,7 +78,12 @@ L.initialize = function() {
         edit_button.hide();
         L.EC.on('osm_loaded', function() {
             $('<div>').append(
-                'download [',
+                'upload to [',
+                $('<a href="#" class="download button">').click(function(evt) {
+                    evt.preventDefault();
+                    L.api_upload(L.EC.diff());
+                }).text('osm api'),
+                ']; download [',
                 $('<a href="#" class="download button">').click(function(evt) {
                     evt.preventDefault();
                     L.download_xml(L.EC.current_data, 'layer.osm');

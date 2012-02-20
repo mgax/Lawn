@@ -29,6 +29,12 @@ def download():
     return flask.Response(osm_data, mimetype='text/xml')
 
 
+@webpages.route('/upload_changeset', methods=['POST'])
+def upload_changeset():
+    print flask.request.data
+    return 'wip'
+
+
 @webpages.route('/test_delta')
 def test_delta():
     return flask.render_template('test_delta.html')
