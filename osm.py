@@ -1,7 +1,12 @@
 import urllib, urlparse
+import logging
 import flask
 import oauth2
 import requests
+
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 
 class OsmApi(object):
@@ -13,6 +18,40 @@ class OsmApi(object):
         url = self.api_url + '/api/0.6/map'
         rq = requests.get(url, params={'bbox': bbox})
         return rq.text
+
+    def oauth_request(self, relative_url, method='GET', data='', headers={}):
+        client = oauth_client()
+        url = self.api_url + relative_url
+        log.debug('sending %s %s: %r', method, url, data)
+        resp, content = client.request(url, method, data, headers)
+        if resp['status'] != '200':
+            log.error('oauth request error! resp: %r\ncontent: %r',
+                      resp, content)
+            raise ValueError('Error in response: %r' % content)
+        return content
+
+    def upload_changeset(self, changeset_xml_str):
+        app = flask.current_app
+        changeset_create_data = (
+            '<osm>\n'
+            '  <changeset>\n'
+            '    <tag k="created_by" v="%(xml_signature)s"/>\n'
+            '    <tag k="comment" v="Test edit"/>\n'
+            '  </changeset>\n'
+            '</osm>\n'
+        ) % {'xml_signature': app.config['OSM_XML_SIGNATURE']}
+        changeset_id = self.oauth_request('/api/0.6/changeset/create',
+                                          'PUT', changeset_create_data)
+        log.info("Created new changeset %r", changeset_id)
+
+        self.oauth_request('/api/0.6/changeset/%s/upload' % changeset_id,
+                           'POST', changeset_xml_str,
+                           {'Content-Type': 'text/xml'})
+        # TODO check the response body
+        log.info("Uploaded osmchange xml")
+
+        self.oauth_request('/api/0.6/changeset/%s/close' % changeset_id, 'PUT')
+        log.info("Closed changeset %r", changeset_id)
 
 
 def oauth_client():

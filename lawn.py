@@ -32,7 +32,9 @@ def download():
 
 @webpages.route('/upload_changeset', methods=['POST'])
 def upload_changeset():
-    print flask.request.data
+    app = flask.current_app
+    changeset_xml_str = flask.request.data
+    osm.OsmApi(app.config['OSM_API_URL']).upload_changeset(changeset_xml_str)
     return 'wip'
 
 
