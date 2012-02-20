@@ -1,3 +1,6 @@
+# inspired by http://flask.pocoo.org/snippets/75/
+# and http://flask.pocoo.org/snippets/86/
+
 import os.path
 import pickle
 from datetime import datetime
