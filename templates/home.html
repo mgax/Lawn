@@ -10,6 +10,7 @@
   <script src="{{ url_for('static', filename='lib/vkbeautify.0.93.beta.js') }}"></script>
   <script src="{{ config['OPENLAYERS_JS'] }}"></script>
   <script src="{{ url_for('static', filename='lawn.js') }}"></script>
+  <script>L.xml_signature = "{{ config['OSM_XML_SIGNATURE'] }}";</script>
   <script src="{{ url_for('static', filename='dispatch.js') }}"></script>
   <script src="{{ url_for('static', filename='edit.js') }}"></script>
   <script src="{{ url_for('static', filename='delta.js') }}"></script>

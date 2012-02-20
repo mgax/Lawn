@@ -10,6 +10,7 @@ DEFAULT_CONFIG = {
     'OSM_API_URL': "http://api06.dev.openstreetmap.org/",
     'OAUTH_ENABLE_CALLBACK': False,
     'PERMANENT_SESSION_LIFETIME': datetime.timedelta(days=365),
+    'OSM_XML_SIGNATURE': "Lawn 0.0.1",
 }
 
 
