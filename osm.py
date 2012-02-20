@@ -35,6 +35,7 @@ def initialize_app(app):
         resp = dict(urlparse.parse_qsl(content))
         flask.session['osm_oauth_token'] = resp['oauth_token']
         flask.session['osm_oauth_token_secret'] = resp['oauth_token_secret']
+        flask.session.permanent = True
 
     @app.route('/authorize')
     def authorize():

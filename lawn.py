@@ -1,12 +1,15 @@
 import os
+import datetime
 import flask
 import flaskext.script
+import dbsession
 import osm
 
 
 DEFAULT_CONFIG = {
     'OSM_API_URL': "http://api06.dev.openstreetmap.org/",
     'OAUTH_ENABLE_CALLBACK': False,
+    'PERMANENT_SESSION_LIFETIME': datetime.timedelta(days=365),
 }
 
 
@@ -36,6 +39,7 @@ def create_app():
     app.register_blueprint(webpages)
     app.config.update(DEFAULT_CONFIG)
     app.config.from_pyfile('settings.py', silent=True)
+    dbsession.initialize_app(app)
     if 'OPENLAYERS_SRC' in app.config:
         from werkzeug.wsgi import SharedDataMiddleware
         app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
