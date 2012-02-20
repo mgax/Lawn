@@ -40,15 +40,17 @@ def initialize_app(app):
     def authorize():
         app = flask.current_app
         _fetch_tokens('request_token')
-        args = urllib.urlencode([
-            ('oauth_token', flask.session['osm_oauth_token']),
-            ('oauth_callback', flask.url_for('authorize_callback', _external=True)),
-        ])
+        args = [ ('oauth_token', flask.session['osm_oauth_token']) ]
+        if app.config['OAUTH_ENABLE_CALLBACK']:
+            callback_url = flask.url_for('authorize_callback', _external=True)
+            args.append( ('oauth_callback', callback_url) )
         return flask.redirect(app.config['OSM_API_URL'] +
-                              '/oauth/authorize?' + args)
+                              '/oauth/authorize?' + urllib.urlencode(args))
 
     @app.route('/authorize_callback')
     def authorize_callback():
-        assert flask.request.args['oauth_token'] == flask.session['osm_oauth_token']
+        if app.config['OAUTH_ENABLE_CALLBACK']:
+            assert (flask.request.args['oauth_token'] ==
+                    flask.session['osm_oauth_token'])
         _fetch_tokens('access_token')
         return 'auth done!'

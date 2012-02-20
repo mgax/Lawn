@@ -6,6 +6,7 @@ import osm
 
 DEFAULT_CONFIG = {
     'OSM_API_URL': "http://api06.dev.openstreetmap.org/",
+    'OAUTH_ENABLE_CALLBACK': False,
 }
 
 
