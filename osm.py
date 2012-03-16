@@ -40,8 +40,8 @@ class OsmApi(object):
             '  </changeset>\n'
             '</osm>\n'
         ) % {'xml_signature': app.config['OSM_XML_SIGNATURE']}
-        changeset_id = self.oauth_request('/api/0.6/changeset/create',
-                                          'PUT', changeset_create_data)
+        changeset_id = int(self.oauth_request('/api/0.6/changeset/create',
+                                              'PUT', changeset_create_data))
         log.info("Created new changeset %r", changeset_id)
 
         self.oauth_request('/api/0.6/changeset/%s/upload' % changeset_id,
