@@ -3,10 +3,19 @@ import logging
 import flask
 import oauth2
 import requests
+import lxml.etree
 
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
+
+
+def _fix_changeset_ids(changeset_xml, changeset_id):
+    doc = lxml.etree.fromstring(changeset_xml)
+    for element in doc.iter(tag=lxml.etree.Element):
+        if 'changeset' in element.attrib:
+            element.attrib['changeset'] = str(changeset_id)
+    return lxml.etree.tostring(doc, pretty_print=True)
 
 
 class OsmApi(object):
@@ -30,7 +39,7 @@ class OsmApi(object):
             raise ValueError('Error in response: %r' % content)
         return content
 
-    def upload_changeset(self, changeset_xml_str):
+    def upload_changeset(self, changeset_xml):
         app = flask.current_app
         changeset_create_data = (
             '<osm>\n'
@@ -44,8 +53,10 @@ class OsmApi(object):
                                               'PUT', changeset_create_data))
         log.info("Created new changeset %r", changeset_id)
 
+        patched_changeset_xml = _fix_changeset_ids(changeset_xml, changeset_id)
+        log.debug("Uploading changeset XML: %s", patched_changeset_xml)
         self.oauth_request('/api/0.6/changeset/%s/upload' % changeset_id,
-                           'POST', changeset_xml_str,
+                           'POST', patched_changeset_xml,
                            {'Content-Type': 'text/xml'})
         # TODO check the response body
         log.info("Uploaded osmchange xml")
