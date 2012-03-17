@@ -54,6 +54,9 @@ L.api_upload = function(osm_diff) {
         data: L.serialize_xml(osm_diff),
         success: function(data) {
             L.message(data);
+        },
+        error: function(data) {
+            L.message(data.responseText);
         }
     });
 };
