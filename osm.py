@@ -68,6 +68,8 @@ class OsmApi(object):
         self.oauth_request('/api/0.6/changeset/%s/close' % changeset_id, 'PUT')
         log.info("Closed changeset %r", changeset_id)
 
+        return changeset_id
+
 
 def oauth_client():
     app = flask.current_app

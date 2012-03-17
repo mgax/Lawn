@@ -36,10 +36,10 @@ def upload_changeset():
     changeset_xml_str = flask.request.data
     osm_api = osm.OsmApi(app.config['OSM_API_URL'])
     try:
-        osm_api.upload_changeset(changeset_xml_str)
+        changeset_id = osm_api.upload_changeset(changeset_xml_str)
     except osm.OsmApiError, e:
         return "OSM API error: %s" % e.message, 400
-    return 'wip'
+    return 'Changeset %d uploaded' % changeset_id
 
 
 @webpages.route('/test_delta')
