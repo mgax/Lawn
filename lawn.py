@@ -34,7 +34,11 @@ def download():
 def upload_changeset():
     app = flask.current_app
     changeset_xml_str = flask.request.data
-    osm.OsmApi(app.config['OSM_API_URL']).upload_changeset(changeset_xml_str)
+    osm_api = osm.OsmApi(app.config['OSM_API_URL'])
+    try:
+        osm_api.upload_changeset(changeset_xml_str)
+    except osm.OsmApiError, e:
+        return "OSM API error: %s" % e.message, 400
     return 'wip'
 
 

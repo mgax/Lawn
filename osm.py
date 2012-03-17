@@ -18,6 +18,10 @@ def _fix_changeset_ids(changeset_xml, changeset_id):
     return lxml.etree.tostring(doc, pretty_print=True)
 
 
+class OsmApiError(Exception):
+    """ Error we received from the OSM API """
+
+
 class OsmApi(object):
 
     def __init__(self, api_url):
@@ -36,7 +40,7 @@ class OsmApi(object):
         if resp['status'] != '200':
             log.error('oauth request error! resp: %r\ncontent: %r',
                       resp, content)
-            raise ValueError('Error in response: %r' % content)
+            raise OsmApiError(content)
         return content
 
     def upload_changeset(self, changeset_xml):
