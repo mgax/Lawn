@@ -12,9 +12,12 @@ log.setLevel(logging.INFO)
 
 def _fix_changeset_ids(changeset_xml, changeset_id):
     doc = lxml.etree.fromstring(changeset_xml)
-    for element in doc.iter(tag=lxml.etree.Element):
-        if 'changeset' in element.attrib:
-            element.attrib['changeset'] = str(changeset_id)
+    for element in doc.iterfind('.//node'):
+        element.attrib['changeset'] = str(changeset_id)
+    for element in doc.iterfind('.//way'):
+        element.attrib['changeset'] = str(changeset_id)
+    for element in doc.iterfind('.//relation'):
+        element.attrib['changeset'] = str(changeset_id)
     return lxml.etree.tostring(doc, pretty_print=True)
 
 
