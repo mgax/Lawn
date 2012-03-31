@@ -31,6 +31,22 @@ L.EditingContext = function(map) {
 
     var download_button = $('<a href="#" class="button">').text('download');
     self.node_layer = new OpenLayers.Layer.Vector('Nodes', {});
+    self.node_layer.styleMap =  new OpenLayers.StyleMap({
+        "default": new OpenLayers.Style({
+            pointRadius: "15",
+            fillColor: "#ffcc66",
+            fillOpacity: 0.5,
+            strokeColor: "#ff9933",
+            strokeWidth: 2,
+            graphicZIndex: 1
+        }),
+        "select": new OpenLayers.Style({
+            fillColor: "#66ccff",
+            strokeColor: "#3399ff",
+            graphicZIndex: 2
+        })
+    });
+
     self.way_layer = new OpenLayers.Layer.Vector('Ways', {});
     download_button.click(function(evt) {
         evt.preventDefault();
