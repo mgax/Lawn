@@ -18,8 +18,12 @@ L.download = function(bbox) {
 };
 
 L.message = function() {
-    var div = $('#message').empty().addClass('visible')
+    var div = $('#message').empty().addClass('visible');
     div.append.apply(div, arguments);
+    $('<a class="button close">[x]</a>').appendTo(div).click(function(evt) {
+        evt.preventDefault();
+        L.hide_message();
+    });
 };
 
 L.hide_message = function() {

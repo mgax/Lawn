@@ -37,6 +37,7 @@ body,
     display: none;
     margin: 50px 150px;
     padding: 5px;
+    padding-right: 40px;
     background: rgba(255, 255, 127, 0.75);
     border: 2px solid #ff8;
     border-radius: 5px;
@@ -45,6 +46,14 @@ body,
 
 #message.visible {
     display: table;
+}
+
+#message a.button.close {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    font-size: 70%;
 }
 
 .button-box {
