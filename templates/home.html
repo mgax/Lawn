@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"> 
   <meta name="apple-mobile-web-app-capable" content="yes"> 
   <title>Lawn OSM Editor</title>
-  <script src="{{ url_for('static', filename='lib/jquery-1.7.1.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='lib/jquery-1.7.1/jquery.min.js') }}"></script>
   <script src="{{ url_for('static', filename='lib/jquery.base64.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='lib/vkbeautify.0.93.beta.js') }}"></script>
+  <script src="{{ url_for('static', filename='lib/vkbeautify-0.93.beta/vkbeautify.js') }}"></script>
   <script src="{{ config['OPENLAYERS_JS'] }}"></script>
   <script src="{{ url_for('static', filename='lawn.js') }}"></script>
   <script>L.xml_signature = "{{ config['OSM_XML_SIGNATURE'] }}";</script>
