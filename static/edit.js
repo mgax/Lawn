@@ -55,7 +55,7 @@ L.EditingContext = function(map) {
         self.map.removeControl(self.edit_control);
         self.download_layer.removeFeatures([box]);
         self.map.removeLayer(self.download_layer);
-        var b = L.project_from_map(box.geometry.bounds);
+        var b = L.invproj(box.geometry.bounds);
         var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
         L.download(bbox).done(function(data) {
             self.original_data = $('osm', data)[0];
@@ -74,7 +74,7 @@ L.EditingContext = function(map) {
             self.map.addControl(self.draw_node_control);
             self.draw_node_control.events.register('featureadded', null, function(evt) {
                 var feature = evt.feature;
-                var coords = L.project_from_map(feature.geometry.clone());
+                var coords = L.invproj(feature.geometry.clone());
                 var node = L.xml_node('node');
                 $(node).attr({
                     lon: coords.x,
@@ -106,7 +106,7 @@ L.EditingContext = function(map) {
             self.node_layer.events.on({
                 'featuremodified': function(evt) {
                     var feature = evt.feature;
-                    var new_position = L.project_from_map(feature.geometry.clone());
+                    var new_position = L.invproj(feature.geometry.clone());
                     self.node_editor.update_position(new_position);
                     var way_features = $(feature.osm_node).data('view-ways');
                     self.way_layer.eraseFeatures(way_features);
@@ -160,7 +160,7 @@ L.EditingContext = function(map) {
             var lon = $node.attr('lon'),
                 lat = $node.attr('lat');
             var point = new OpenLayers.Geometry.Point(lon, lat);
-            feature = new OpenLayers.Feature.Vector(L.project_to_map(point));
+            feature = new OpenLayers.Feature.Vector(L.proj(point));
             self.node_layer.addFeatures([feature]);
         }
         feature.osm_node = node;

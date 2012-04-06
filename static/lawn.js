@@ -3,11 +3,11 @@
 L.wgs84 = new OpenLayers.Projection("EPSG:4326");
 L.map_proj = new OpenLayers.Projection("EPSG:900913");
 
-L.project_to_map = function(value) {
+L.proj = function(value) {
     return value.transform(L.wgs84, L.map_proj);
 };
 
-L.project_from_map = function(value) {
+L.invproj = function(value) {
     return value.transform(L.map_proj, L.wgs84);
 };
 
@@ -71,7 +71,7 @@ $(document).ready(function() {
 L.initialize = function() {
     L.map = new OpenLayers.Map('map');
     L.map.addLayer(new OpenLayers.Layer.OSM("OpenStreetMap"));
-    L.map.setCenter(L.project_to_map(new OpenLayers.LonLat(13.4055, 52.5219)), 13);
+    L.map.setCenter(L.proj(new OpenLayers.LonLat(13.4055, 52.5219)), 13);
 
     var menu_div = $('#menu');
     var edit_button = $('<a href="#" class="button">').text('edit');
