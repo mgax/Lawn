@@ -1,7 +1,5 @@
 (function() {
 
-var L = window.L = {};
-
 L.wgs84 = new OpenLayers.Projection("EPSG:4326");
 L.map_proj = new OpenLayers.Projection("EPSG:900913");
 
