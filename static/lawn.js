@@ -103,4 +103,19 @@ L.main = function() {
 };
 
 
+L.load_templates = function() {
+    L.template = {};
+    $('script[type^="text/template"]').each(function() {
+        var name = $(this).attr('name');
+        var tmpl = _.template($(this).text());
+        function render(context) {
+            var full_context = _({template: L.template}).extend(context);
+            return tmpl(full_context);
+        }
+        L.template[name] = render;
+        $(this).remove();
+    });
+};
+
+
 })();

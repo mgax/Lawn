@@ -107,7 +107,7 @@ L.EditingContext = function(map) {
                 'featuremodified': function(evt) {
                     var feature = evt.feature;
                     var new_position = L.invproj(feature.geometry.clone());
-                    self.node_editor.update_position(new_position);
+                    self.node_view.update_position(new_position);
                     var way_features = $(feature.osm_node).data('view-ways');
                     self.way_layer.eraseFeatures(way_features);
                     $.each(way_features, function(i, feature) {
@@ -127,12 +127,14 @@ L.EditingContext = function(map) {
                 'featurehighlighted': function(e) {
                     self.node_create.hide();
                     var feature = e.feature;
-                    self.node_editor = L.NodeEditor(feature.osm_node);
-                    self.node_editor.on('close', function() {
-                        self.node_editor = null;
+                    var node_model = new L.NodeModel({}, {xml: feature.osm_node});
+                    self.node_view = new L.NodeView({model: node_model});
+                    self.node_view.on('close', function() {
+                        self.node_view.$el.remove();
+                        self.node_view = null;
                         self.select_control.unselect(feature);
                     });
-                    self.node_editor.on('remove', function() {
+                    self.node_view.on('remove', function() {
                         var node = feature.osm_node
                         self.node_layer.eraseFeatures([feature]);
                         var way_features = $(node).data('view-ways');
@@ -142,9 +144,10 @@ L.EditingContext = function(map) {
                             self.way_layer.drawFeature(way_feature);
                         });
                     });
+                    self.node_view.$el.insertAfter($('#menu'));
                 },
                 'featureunhighlighted': function(e) {
-                    if(self.node_editor) self.node_editor.close();
+                    if(self.node_view) self.node_view.close();
                     self.node_create.show();
                 }
             });
@@ -205,91 +208,93 @@ L.xml_node = function(tag_name) {
 };
 
 
-L.NodeEditor = function(node) {
-    var self = {node: $(node)};
+L.NodeModel = Backbone.Model.extend({
 
-    self.dispatch = L.Dispatch(self);
-
-    self.box = $('<div class="node-properties">').insertAfter($('#menu'));
-
-    self.box.append($('<div class="button-box">').append(
-        '[',
-        $('<a href="#" class="close button">').click(function(evt) {
-            evt.preventDefault();
-            self.close();
-        }).text('x'),
-        ']'
-    ));
-    $('<div>').append('node ' + self.node.attr('id')).appendTo(self.box);
-    $('<div>').append('lat: <span class="node-lat">').appendTo(self.box);
-    $('<div>').append('lat: <span class="node-lon">').appendTo(self.box);
-
-    function display_position() {
-        $('span.node-lat', self.box).text(self.node.attr('lat'));
-        $('span.node-lon', self.box).text(self.node.attr('lon'));
-    }
-    display_position();
-
-    var tag_table = $('<table class="node-tags">').appendTo(self.box);
-    tag_table.html('<thead><tr><th>Key</th><th>Value</th></tr></thead>');
-
-    function new_tag_row(key, value) {
-        var key_input = $('<td>').append($('<input name="key">').val(key));
-        var val_input = $('<td>').append($('<input name="value">').val(value));
-        $('<tr class="tag">').appendTo(tag_table).append(key_input, val_input);
+    initialize: function(attributes, options) {
+        this.xml = options['xml'];
+        this.$xml = $(this.xml);
+        this.set({
+            lat: this.$xml.attr('lat'),
+            lon: this.$xml.attr('lon')
+        });
+        this.id = this.$xml.attr('id');
     }
 
-    $('> tag', self.node).each(function() {
-        var tag = $(this);
-        new_tag_row(tag.attr('k'), tag.attr('v'));
-    });
+});
 
-    self.box.append($('<div>').append(
-        '[',
-        $('<a href="#" class="new button">').click(function(evt) {
-            evt.preventDefault();
-            new_tag_row('', '');
-        }).text('new tag'),
-        '] [',
-        $('<a href="#" class="delete button">').click(function(evt) {
-            evt.preventDefault();
-            self.delete();
-        }).text('delete node'),
-        ']'
-    ));
 
-    self.save = function() {
-        $('> tag', self.node).remove();
-        $('tr.tag', self.box).each(function() {
-            var key = $('input[name=key]', this).val();
-            var value = $('input[name=value]', this).val();
+L.NodeView = Backbone.View.extend({
+
+    className: 'node-properties',
+
+    events: {
+        'click .close.button': 'close',
+        'click .new.button': 'new_tag',
+        'click .delete.button': 'delete'
+    },
+
+    initialize: function() {
+        this.render();
+    },
+
+    render: function() {
+        $('.node-view-info', this.el).remove();
+        var template = L.template['node-view-info'];
+        var tmpl_data = _({id: this.model.id}).extend(this.model.attributes);
+        this.$el.prepend(template(tmpl_data));
+        if($('table.node-tags', this.el).length < 1) {
+            this.render_table();
+        }
+    },
+
+    render_table: function() {
+        var tags_data = _($('> tag', this.model.xml)).map(function(tag_xml) {
+            return {
+                'key': $(tag_xml).attr('k'),
+                'value': $(tag_xml).attr('v')
+            };
+        });
+        this.$el.append(L.template['tags-table']({'tags': tags_data}));
+    },
+
+    new_tag: function(evt) {
+        evt.preventDefault();
+        var tag_html = L.template['tag-tr']({'key': "", 'value': ""});
+        $('table.node-tags', this.el).append(tag_html);
+    },
+
+    save: function() {
+        $('> tag', this.model.xml).remove();
+        $('tr.tag', this.el).each(_(function(i, tr) {
+            var key = $('input[name=key]', tr).val();
+            var value = $('input[name=value]', tr).val();
             if(key && value) {
                 var tag = $(L.xml_node('tag')).attr({k: key, v: value});
-                self.node.append(tag);
+                this.model.$xml.append(tag);
             }
-        });
-    };
+        }).bind(this));
+    },
 
-    self.close = function() {
-        self.save();
-        self.box.remove();
-        self.dispatch({type: 'close'});
-    };
+    update_position: function(new_position) {
+        this.model.set('lon', new_position.x);
+        this.model.set('lat', new_position.y);
+        this.render();
+    },
 
-    self.update_position = function(new_position) {
-        self.node.attr('lon', new_position.x);
-        self.node.attr('lat', new_position.y);
-        display_position();
-    };
+    delete: function(evt) {
+        evt.preventDefault();
+        this.close()
+        this.trigger('remove');
+        this.model.$xml.remove();
+    },
 
-    self.delete = function() {
-        self.close()
-        self.dispatch({type: 'remove'});
-        self.node.remove();
-    };
+    close: function(evt) {
+        if(evt) { evt.preventDefault(); }
+        this.save();
+        this.trigger('close');
+    }
 
-    return self;
-};
+});
 
 
 L.NodeCreate = function() {

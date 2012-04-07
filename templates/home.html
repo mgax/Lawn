@@ -2,9 +2,14 @@
 
 {% block body %}
 <div id="menu"></div>
+
 <script>
 $(document).ready(function() {
+    L.load_templates();
     setTimeout(L.main, 200); // fix weird openlayers layout behaviour
 });
 </script>
+
+{% include 'edit_js_views.html' %}
+
 {% endblock %}
