@@ -64,15 +64,15 @@ L.api_upload = function(osm_diff) {
 };
 
 
-$(document).ready(function() {
-    setTimeout(L.initialize, 200); // fix weird openlayers layout behaviour
-});
-
-L.initialize = function() {
+L.initialize_map = function() {
     L.map = new OpenLayers.Map('map');
     L.map.addLayer(new OpenLayers.Layer.OSM("OpenStreetMap"));
     L.map.setCenter(L.proj(new OpenLayers.LonLat(13.4055, 52.5219)), 13);
+};
 
+
+L.main = function() {
+    L.initialize_map();
     var menu_div = $('#menu');
     var edit_button = $('<a href="#" class="button">').text('edit');
     edit_button.appendTo(menu_div).click(function(evt) {
