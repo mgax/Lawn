@@ -28,6 +28,14 @@ L.hide_message = function() {
     $('#message').removeClass('visible');
 };
 
+L.parse_xml = function(xml_src) {
+    var root_node = $.parseXML(xml_src.replace(/>\s+</g, '><')).firstChild;
+    $('*', root_node).each(function(i, node) {
+        node.namespaceURI = "";
+    });
+    return root_node;
+};
+
 L.serialize_xml = function(xml_root) {
     xml_str = new XMLSerializer().serializeToString(xml_root);
     return ('<?xml version="1.0" encoding="UTF-8" ?>\n' +

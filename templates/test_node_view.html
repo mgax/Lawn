@@ -8,14 +8,6 @@ $(document).ready(function() {
     L.load_templates();
     setTimeout(L.initialize_map, 200); // fix weird openlayers layout behaviour
 
-    L.parse_xml = function(xml_src) {
-        var root_node = $.parseXML(xml_src.replace(/>\s+</g, '><')).firstChild;
-        $('*', root_node).each(function(i, node) {
-            node.namespaceURI = "";
-        });
-        return root_node;
-    };
-
     var root_xml = L.parse_xml(L.template['node1-xml']());
     var node_xml = $('node', root_xml)[0];
 
