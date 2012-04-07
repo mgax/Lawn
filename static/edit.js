@@ -90,7 +90,8 @@ L.EditingContext = function(map) {
                 self.select_control.select(feature);
             });
 
-            self.node_create = L.NodeCreate();
+            self.node_create = new L.NodeCreate;
+            self.node_create.$el.insertAfter($('#menu'));
             self.node_create.on('create_node', function() {
                 self.select_control.deactivate();
                 self.modify_control.deactivate();
@@ -297,38 +298,41 @@ L.NodeView = Backbone.View.extend({
 });
 
 
-L.NodeCreate = function() {
-    var self = {};
+L.NodeCreate = Backbone.View.extend({
 
-    self.dispatch = L.Dispatch(self);
+    templateName: 'node-create',
+    className: 'node-properties',
 
-    self.box = $('<div class="node-properties">').insertAfter($('#menu'));
+    events: {
+        'click .node-create-button a': 'buttonClick'
+    },
 
-    self.button_box = $('<div>').append(
-        '[',
-        $('<a href="#" class="new button">').click(function(evt) {
-            evt.preventDefault();
-            self.button_box.hide();
-            self.message_box.show();
-            self.dispatch({type: 'create_node'});
-        }).text('create node'),
-        ']'
-    ).appendTo(self.box);
+    initialize: function() {
+        this.render();
+    },
 
-    self.message_box = $('<div>').text("Click on map").appendTo(self.box).hide();
+    render: function() {
+        this.$el.html(L.template[this.templateName]({model: this.model}));
+    },
 
-    self.show = function() {
-        self.message_box.hide();
-        self.button_box.show();
-        self.box.show();
-    };
+    buttonClick: function(evt) {
+        evt.preventDefault();
+        $('.node-create-button', this.el).hide();
+        $('.node-create-message', this.el).show();
+        this.trigger('create_node');
+    },
 
-    self.hide = function() {
-        self.box.hide();
-    };
+    show: function() {
+        $('.node-create-message', this.el).hide();
+        $('.node-create-button', this.el).show();
+        this.$el.show();
+    },
 
-    return self;
-};
+    hide: function() {
+        this.$el.hide();
+    }
+
+});
 
 
 })(window.L);

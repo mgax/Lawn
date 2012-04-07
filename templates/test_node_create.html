@@ -1,0 +1,22 @@
+{% extends 'map_page.html' %}
+
+{% block body %}
+
+<script>
+$(document).ready(function() {
+
+    L.load_templates();
+    setTimeout(L.initialize_map, 200); // fix weird openlayers layout behaviour
+
+    L.node_create = new L.NodeCreate;
+    L.node_create.$el.insertAfter($('#map'));
+    L.node_create.on('create_node', function() {
+        console.log('node create');
+    });
+
+});
+</script>
+
+{% include 'edit_js_views.html' %}
+
+{% endblock %}
