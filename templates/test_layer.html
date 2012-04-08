@@ -1,23 +1,38 @@
 {% extends 'map_page.html' %}
+{% from 'bits.html' import link_less -%}
+
+{% block head_css %}
+  {{ link_less('test.less') }}
+{% endblock %}
 
 {% block body %}
 
 <div id="menu"></div>
 
+<div class="test-layer-xml"></div>
+
 <script>
 (function(L) {
 
-function main() {
-    L.initialize_map({lon: 26.1, lat: 44.435, zoom: 17});
+L.update_layer_xml = function() {
+    var layer_xml = L.editing_context.model.xml;
+    var layer_xml_str = L.serialize_xml(layer_xml);
+    $('.test-layer-xml').text(layer_xml_str);
+}
+
+L.main = function() {
+    L.initialize_map({lon: 26.097, lat: 44.435, zoom: 17});
     L.orig_xml = L.parse_xml(L.template['layer-orig-xml']());
     L.editing_context = L.EditingContext(L.map);
     L.editing_context.clear_download_ui();
     L.editing_context.edit_osm(L.orig_xml.parentNode);
+    L.editing_context.model.on('change', L.update_layer_xml);
+    L.update_layer_xml();
 }
 
 $(document).ready(function() {
     L.load_templates();
-    setTimeout(main, 200); // fix weird openlayers layout behaviour
+    setTimeout(L.main, 200); // fix weird openlayers layout behaviour
 });
 
 })(window.L);

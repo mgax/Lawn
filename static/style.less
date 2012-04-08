@@ -20,8 +20,7 @@ body,
     border-bottom-left-radius: 5px;
 }
 
-.node-properties,
-.node-create {
+.floating-box {
     z-index: 1100;
     position: absolute;
     top: 50px;
@@ -30,6 +29,11 @@ body,
     background: rgba(255, 255, 255, 0.75);
     border: 2px solid #888;
     border-radius: 5px;
+}
+
+.node-properties,
+.node-create {
+    .floating-box;
 }
 
 #message {
