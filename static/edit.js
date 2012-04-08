@@ -229,6 +229,11 @@ L.NodeModel = Backbone.Model.extend({
             lon: this.$xml.attr('lon')
         });
         this.id = this.$xml.attr('id');
+
+        this.on('change:lat', function(evt, value) {
+            this.$xml.attr('lat', value); }, this);
+        this.on('change:lon', function(evt, value) {
+            this.$xml.attr('lon', value); }, this);
     }
 });
 
@@ -264,6 +269,12 @@ L.LayerModel = Backbone.Model.extend({
                     nodes: this.nodes
                 });
             }, this));
+
+        function propagate_events() {
+            this.trigger.apply(this, arguments);
+        }
+        this.nodes.on('all', propagate_events, this);
+        this.ways.on('all', propagate_events, this);
     }
 });
 
@@ -321,8 +332,10 @@ L.NodeView = Backbone.View.extend({
     },
 
     update_position: function(new_position) {
-        this.model.set('lon', new_position.x);
-        this.model.set('lat', new_position.y);
+        this.model.set({
+            'lon': new_position.x,
+            'lat': new_position.y
+        });
         this.render();
     },
 
