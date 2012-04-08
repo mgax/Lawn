@@ -11,6 +11,11 @@ L.invproj = function(value) {
     return value.transform(L.map_proj, L.wgs84);
 };
 
+L.precision = Math.pow(10, 7);
+L.quantize = function(value) {
+    return parseInt(value * L.precision) / L.precision;
+};
+
 L.download = function(bbox) {
     return $.get('/download', {bbox: bbox});
 };

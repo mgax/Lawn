@@ -338,8 +338,8 @@ L.NodeView = Backbone.View.extend({
 
     update_position: function(new_position) {
         this.model.set({
-            'lon': new_position.x,
-            'lat': new_position.y
+            'lon': L.quantize(new_position.x),
+            'lat': L.quantize(new_position.y)
         });
         this.render();
     },
