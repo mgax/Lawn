@@ -9,7 +9,8 @@
 
 <div id="menu"></div>
 
-<div class="test-layer-xml"></div>
+<script src='http://cdnjs.cloudflare.com/ajax/libs/prettify/188.0.0/prettify.js'></script>
+<div class="test-layer-xml"><pre class="prettyprint"></pre></div>
 
 <script>
 (function(L) {
@@ -17,7 +18,8 @@
 L.update_layer_xml = function() {
     var layer_xml = L.editing_context.model.xml;
     var layer_xml_str = L.serialize_xml(layer_xml);
-    $('.test-layer-xml').text(layer_xml_str);
+    $('.test-layer-xml pre').text(layer_xml_str);
+    prettyPrint();
 }
 
 L.main = function() {
