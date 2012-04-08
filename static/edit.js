@@ -60,35 +60,23 @@ L.EditingContext = function(map) {
         self.vector.node_layer.styleMap = node_style_map;
         self.map.addLayers([self.vector.node_layer, self.vector.way_layer]);
 
-        self.draw_node_control = new OpenLayers.Control.DrawFeature(
-            self.vector.node_layer, OpenLayers.Handler.Point);
-        self.map.addControl(self.draw_node_control);
-        self.draw_node_control.events.register('featureadded', null, function(evt) {
-            var feature = evt.feature;
-            var coords = L.invproj(feature.geometry.clone());
-            var node_xml = L.xml_node('node');
-            $(node_xml).attr({
-                lon: coords.x,
-                lat: coords.y,
-                id: self.generate_id(),
-                version: 1
-            });
-            var node_model = new L.NodeModel({}, {xml: node_xml});
-            self.model.nodes.add(node_model);
-            $(self.current_data).append(node_xml);
-            self.display_osm_node(node_xml, feature);
-            self.draw_node_control.deactivate();
+        self.node_create = new L.NodeCreate({
+            layer_vector: self.vector,
+            generate_id: self.generate_id
+        });
+        self.draw_node_control = self.node_create.draw_node_control;
+        self.map.addControl(self.node_create.draw_node_control);
+        self.node_create.on('create_node', function(node_model, node_feature) {
+            self.model.nodes.add(node_model, {feature: node_feature});
             self.select_control.activate();
             self.modify_control.activate();
-            self.select_control.select(feature);
+            self.select_control.select(node_feature);
         });
 
-        self.node_create = new L.NodeCreate;
         self.node_create.$el.insertAfter($('#menu'));
-        self.node_create.on('create_node', function() {
+        self.node_create.on('begin_create_node', function() {
             self.select_control.deactivate();
             self.modify_control.deactivate();
-            self.draw_node_control.activate();
         });
 
         self.modify_control = new OpenLayers.Control.ModifyFeature(
@@ -216,6 +204,10 @@ L.LayerModel = Backbone.Model.extend({
                 });
             }, this));
 
+        this.nodes.on('add', function(node) {
+            this.$xml.append(node.xml);
+        }, this);
+
         this.nodes.on('destroy', function(node) {
             node.$xml.remove();
         });
@@ -246,7 +238,10 @@ L.NodeVector = Backbone.View.extend({
     initialize: function(options) {
         this.layer_vector = options['layer_vector'];
         var geometry = L.proj(L.node_point(this.model));
-        this.feature = new OpenLayers.Feature.Vector(geometry);
+        this.feature = options['feature'];
+        if(! this.feature) {
+            this.feature = new OpenLayers.Feature.Vector(geometry);
+        }
         this.feature.L_vector = this;
     },
 
@@ -316,10 +311,11 @@ L.LayerVector = Backbone.View.extend({
         this.model.ways.on('add', this.add_way, this);
     },
 
-    add_node: function(node_model) {
+    add_node: function(node_model, collection, options) {
         var node_vector = new L.NodeVector({
             layer_vector: this,
-            model: node_model
+            model: node_model,
+            feature: options['feature']
         });
         this.node_vectors[node_model.id] = node_vector;
         this.node_layer.addFeatures([node_vector.feature]);
@@ -423,7 +419,14 @@ L.NodeCreate = Backbone.View.extend({
         'click .node-create-button a': 'buttonClick'
     },
 
-    initialize: function() {
+    initialize: function(options) {
+        this.layer_vector = options['layer_vector'];
+        this.generate_id = options['generate_id'];
+        this.draw_node_control = new OpenLayers.Control.DrawFeature(
+            this.layer_vector.node_layer,
+            OpenLayers.Handler.Point);
+        this.draw_node_control.events.register('featureadded',
+            this, this.feature_added);
         this.render();
     },
 
@@ -435,7 +438,8 @@ L.NodeCreate = Backbone.View.extend({
         evt.preventDefault();
         $('.node-create-button', this.el).hide();
         $('.node-create-message', this.el).show();
-        this.trigger('create_node');
+        this.trigger('begin_create_node');
+        this.draw_node_control.activate();
     },
 
     show: function() {
@@ -446,8 +450,22 @@ L.NodeCreate = Backbone.View.extend({
 
     hide: function() {
         this.$el.hide();
-    }
+    },
 
+    feature_added: function(evt) {
+        var node_feature = evt.feature;
+        var coords = L.invproj(node_feature.geometry.clone());
+        var node_xml = L.xml_node('node');
+        $(node_xml).attr({
+            lon: L.quantize(coords.x),
+            lat: L.quantize(coords.y),
+            id: this.generate_id(),
+            version: 1
+        });
+        var node_model = new L.NodeModel({}, {xml: node_xml});
+        this.draw_node_control.deactivate();
+        this.trigger('create_node', node_model, node_feature);
+    }
 });
 
 
