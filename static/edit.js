@@ -120,7 +120,8 @@ L.EditingContext = function(map) {
             'featurehighlighted': function(e) {
                 self.node_create.hide();
                 var feature = e.feature;
-                var node_model = new L.NodeModel({}, {xml: feature.osm_node});
+                var node_id = $(feature.osm_node).attr('id');
+                var node_model = self.model.nodes.get(node_id);
                 self.node_view = new L.NodeView({model: node_model});
                 self.node_view.on('close', function() {
                     self.node_view.$el.remove();
@@ -201,6 +202,7 @@ L.EditingContext = function(map) {
     };
 
     self.display_osm = function(osm_doc) {
+        self.model = new L.LayerModel({}, {xml: osm_doc});
         $('> node', osm_doc).each(function() {
             self.display_osm_node(this);
         });
@@ -219,7 +221,6 @@ L.xml_node = function(tag_name) {
 
 
 L.NodeModel = Backbone.Model.extend({
-
     initialize: function(attributes, options) {
         this.xml = options['xml'];
         this.$xml = $(this.xml);
@@ -229,7 +230,41 @@ L.NodeModel = Backbone.Model.extend({
         });
         this.id = this.$xml.attr('id');
     }
+});
 
+
+L.WayModel = Backbone.Model.extend({
+    initialize: function(attributes, options) {
+        this.xml = options['xml'];
+        this.$xml = $(this.xml);
+        this.id = this.$xml.attr('id');
+        this.nodes = new Backbone.Collection(
+            _(this.$xml.find('> nd')).map(function(nd_xml) {
+                var node_id = $(nd_xml).attr('ref');
+                return options['nodes'].get(node_id);
+            }));
+    }
+});
+
+
+L.LayerModel = Backbone.Model.extend({
+    initialize: function(attributes, options) {
+        this.xml = options['xml'];
+        this.$xml = $(this.xml);
+
+        this.nodes = new Backbone.Collection(
+            _(this.$xml.find('> node')).map(function(node_xml) {
+                return new L.NodeModel({}, {xml: node_xml});
+            }));
+
+        this.ways = new Backbone.Collection(
+            _(this.$xml.find('> way')).map(function(way_xml) {
+                return new L.WayModel({}, {
+                    xml: way_xml,
+                    nodes: this.nodes
+                });
+            }, this));
+    }
 });
 
 
