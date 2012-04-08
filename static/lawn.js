@@ -72,10 +72,16 @@ L.api_upload = function(osm_diff) {
 };
 
 
-L.initialize_map = function() {
+L.initialize_map = function(options) {
+    options = _({
+        lon: 13.4055,
+        lat: 52.5219,
+        zoom: 13
+    }).extend(options);
     L.map = new OpenLayers.Map('map');
     L.map.addLayer(new OpenLayers.Layer.OSM("OpenStreetMap"));
-    L.map.setCenter(L.proj(new OpenLayers.LonLat(13.4055, 52.5219)), 13);
+    var center = new OpenLayers.LonLat(options['lon'], options['lat']);
+    L.map.setCenter(L.proj(center), options['zoom']);
 };
 
 

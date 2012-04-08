@@ -48,112 +48,121 @@ L.EditingContext = function(map) {
     });
 
     self.way_layer = new OpenLayers.Layer.Vector('Ways', {});
-    download_button.click(function(evt) {
-        evt.preventDefault();
+
+    self.edit_osm = function(data) {
+        self.original_data = $('osm', data)[0];
+        self.current_data = $(self.original_data).clone()[0];
+        $(self.current_data).attr('generator', L.xml_signature);
+        self.node_map = {};
+        self.diff = function() {
+            return L.xml_diff(self.original_data, self.current_data);
+        };
+        self.dispatch({type: 'osm_loaded'});
+        self.map.addLayers([self.node_layer, self.way_layer]);
+        self.display_osm(self.current_data);
+
+        self.draw_node_control = new OpenLayers.Control.DrawFeature(
+            self.node_layer, OpenLayers.Handler.Point);
+        self.map.addControl(self.draw_node_control);
+        self.draw_node_control.events.register('featureadded', null, function(evt) {
+            var feature = evt.feature;
+            var coords = L.invproj(feature.geometry.clone());
+            var node = L.xml_node('node');
+            $(node).attr({
+                lon: coords.x,
+                lat: coords.y,
+                id: self.generate_id(),
+                version: 1
+            });
+            $(self.current_data).append(node);
+            self.display_osm_node(node, feature);
+            self.draw_node_control.deactivate();
+            self.select_control.activate();
+            self.modify_control.activate();
+            self.select_control.select(feature);
+        });
+
+        self.node_create = new L.NodeCreate;
+        self.node_create.$el.insertAfter($('#menu'));
+        self.node_create.on('create_node', function() {
+            self.select_control.deactivate();
+            self.modify_control.deactivate();
+            self.draw_node_control.activate();
+        });
+
+        self.modify_control = new OpenLayers.Control.ModifyFeature(
+            self.node_layer,
+            {standalone: true});
+        self.map.addControl(self.modify_control);
+        self.modify_control.activate();
+
+        self.node_layer.events.on({
+            'featuremodified': function(evt) {
+                var feature = evt.feature;
+                var new_position = L.invproj(feature.geometry.clone());
+                self.node_view.update_position(new_position);
+                var way_features = $(feature.osm_node).data('view-ways');
+                self.way_layer.eraseFeatures(way_features);
+                $.each(way_features, function(i, feature) {
+                    self.way_layer.drawFeature(feature);
+                });
+            }
+        });
+
+        self.select_control = new OpenLayers.Control.SelectFeature(
+            self.node_layer,
+            {
+                onSelect: self.modify_control.selectFeature,
+                onUnselect: self.modify_control.unselectFeature,
+                scope: self.modify_control
+            });
+        self.select_control.events.on({
+            'featurehighlighted': function(e) {
+                self.node_create.hide();
+                var feature = e.feature;
+                var node_model = new L.NodeModel({}, {xml: feature.osm_node});
+                self.node_view = new L.NodeView({model: node_model});
+                self.node_view.on('close', function() {
+                    self.node_view.$el.remove();
+                    self.node_view = null;
+                    self.select_control.unselect(feature);
+                });
+                self.node_view.on('remove', function() {
+                    var node = feature.osm_node
+                    self.node_layer.eraseFeatures([feature]);
+                    var way_features = $(node).data('view-ways');
+                    self.way_layer.eraseFeatures(way_features);
+                    $.each(way_features, function(i, way_feature) {
+                        way_feature.geometry.removeComponent(feature.geometry);
+                        self.way_layer.drawFeature(way_feature);
+                    });
+                });
+                self.node_view.$el.insertAfter($('#menu'));
+            },
+            'featureunhighlighted': function(e) {
+                if(self.node_view) self.node_view.close();
+                self.node_create.show();
+            }
+        });
+        self.map.addControl(self.select_control);
+        self.select_control.activate();
+    };
+
+    self.clear_download_ui = function() {
         L.hide_message();
         self.edit_control.deactivate();
         self.map.removeControl(self.edit_control);
         self.download_layer.removeFeatures([box]);
         self.map.removeLayer(self.download_layer);
+    };
+
+    download_button.click(function(evt) {
+        evt.preventDefault();
+        self.clear_download_ui();
         var b = L.invproj(box.geometry.bounds);
         var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
         L.download(bbox).done(function(data) {
-            self.original_data = $('osm', data)[0];
-            self.current_data = $(self.original_data).clone()[0];
-            $(self.current_data).attr('generator', L.xml_signature);
-            self.node_map = {};
-            self.diff = function() {
-                return L.xml_diff(self.original_data, self.current_data);
-            };
-            self.dispatch({type: 'osm_loaded'});
-            self.map.addLayers([self.node_layer, self.way_layer]);
-            self.display_osm(self.current_data);
-
-            self.draw_node_control = new OpenLayers.Control.DrawFeature(
-                self.node_layer, OpenLayers.Handler.Point);
-            self.map.addControl(self.draw_node_control);
-            self.draw_node_control.events.register('featureadded', null, function(evt) {
-                var feature = evt.feature;
-                var coords = L.invproj(feature.geometry.clone());
-                var node = L.xml_node('node');
-                $(node).attr({
-                    lon: coords.x,
-                    lat: coords.y,
-                    id: self.generate_id(),
-                    version: 1
-                });
-                $(self.current_data).append(node);
-                self.display_osm_node(node, feature);
-                self.draw_node_control.deactivate();
-                self.select_control.activate();
-                self.modify_control.activate();
-                self.select_control.select(feature);
-            });
-
-            self.node_create = new L.NodeCreate;
-            self.node_create.$el.insertAfter($('#menu'));
-            self.node_create.on('create_node', function() {
-                self.select_control.deactivate();
-                self.modify_control.deactivate();
-                self.draw_node_control.activate();
-            });
-
-            self.modify_control = new OpenLayers.Control.ModifyFeature(
-                self.node_layer,
-                {standalone: true});
-            self.map.addControl(self.modify_control);
-            self.modify_control.activate();
-
-            self.node_layer.events.on({
-                'featuremodified': function(evt) {
-                    var feature = evt.feature;
-                    var new_position = L.invproj(feature.geometry.clone());
-                    self.node_view.update_position(new_position);
-                    var way_features = $(feature.osm_node).data('view-ways');
-                    self.way_layer.eraseFeatures(way_features);
-                    $.each(way_features, function(i, feature) {
-                        self.way_layer.drawFeature(feature);
-                    });
-                }
-            });
-
-            self.select_control = new OpenLayers.Control.SelectFeature(
-                self.node_layer,
-                {
-                    onSelect: self.modify_control.selectFeature,
-                    onUnselect: self.modify_control.unselectFeature,
-                    scope: self.modify_control
-                });
-            self.select_control.events.on({
-                'featurehighlighted': function(e) {
-                    self.node_create.hide();
-                    var feature = e.feature;
-                    var node_model = new L.NodeModel({}, {xml: feature.osm_node});
-                    self.node_view = new L.NodeView({model: node_model});
-                    self.node_view.on('close', function() {
-                        self.node_view.$el.remove();
-                        self.node_view = null;
-                        self.select_control.unselect(feature);
-                    });
-                    self.node_view.on('remove', function() {
-                        var node = feature.osm_node
-                        self.node_layer.eraseFeatures([feature]);
-                        var way_features = $(node).data('view-ways');
-                        self.way_layer.eraseFeatures(way_features);
-                        $.each(way_features, function(i, way_feature) {
-                            way_feature.geometry.removeComponent(feature.geometry);
-                            self.way_layer.drawFeature(way_feature);
-                        });
-                    });
-                    self.node_view.$el.insertAfter($('#menu'));
-                },
-                'featureunhighlighted': function(e) {
-                    if(self.node_view) self.node_view.close();
-                    self.node_create.show();
-                }
-            });
-            self.map.addControl(self.select_control);
-            self.select_control.activate();
+            self.edit_osm(data);
         });
     });
     L.message("Select area then click ", download_button);
