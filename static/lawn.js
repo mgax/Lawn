@@ -1,5 +1,18 @@
 (function() {
 
+_.mixin({
+    pop: function(obj, key) {
+        if(_.isArray(obj)) {
+            return obj.splice(key, 1)[0];
+        }
+        if(_.has(obj, key)) {
+            var value = obj[key];
+            delete obj[key];
+            return value;
+        }
+    }
+});
+
 L.wgs84 = new OpenLayers.Projection("EPSG:4326");
 L.map_proj = new OpenLayers.Projection("EPSG:900913");
 

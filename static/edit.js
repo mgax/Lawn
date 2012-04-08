@@ -127,14 +127,6 @@ L.EditingContext = function(map) {
                     self.node_view = null;
                     self.select_control.unselect(feature);
                 });
-                self.node_view.on('remove', function() {
-                    self.vector.node_layer.eraseFeatures([feature]);
-                    feature.L_vector.model.ways.forEach(function(way) {
-                        var way_feature = self.vector.way_vectors[way.id].feature;
-                        way_feature.geometry.removeComponent(feature.geometry);
-                        self.vector.way_layer.drawFeature(way_feature);
-                    }, this);
-                });
                 self.node_view.$el.insertAfter($('#menu'));
             },
             'featureunhighlighted': function(e) {
@@ -191,6 +183,10 @@ L.NodeModel = Backbone.Model.extend({
                 this.$xml.attr(name, this.get(name));
             }}, this);
         Backbone.Model.prototype.change.apply(this, arguments);
+    },
+
+    destroy: function() {
+        this.trigger('destroy', this);
     }
 });
 
@@ -207,6 +203,9 @@ L.WayModel = Backbone.Model.extend({
                 node.ways.add(this);
                 return node;
             }, this));
+        this.nodes.on('destroy', function(node) {
+            this.$xml.find('> nd[ref="' + node.id + '"]').remove();
+        }, this);
     }
 });
 
@@ -228,6 +227,10 @@ L.LayerModel = Backbone.Model.extend({
                     nodes: this.nodes
                 });
             }, this));
+
+        this.nodes.on('destroy', function(node) {
+            node.$xml.remove();
+        });
 
         function propagate_events() {
             this.trigger.apply(this, arguments);
@@ -253,13 +256,23 @@ L.NodeVector = Backbone.View.extend({
 L.WayVector = Backbone.View.extend({
     initialize: function(options) {
         this.layer_vector = options['layer_vector'];
+        this.node_point = {};
         var line_string = new OpenLayers.Geometry.LineString();
         this.model.nodes.forEach(function(node_model) {
             var node_vector = this.layer_vector.node_vectors[node_model.id];
-            line_string.addComponent(node_vector.feature.geometry);
+            var point = node_vector.feature.geometry;
+            line_string.addComponent(point);
+            this.node_point[node_model.id] = point;
         }, this);
         this.feature = new OpenLayers.Feature.Vector(line_string);
         this.feature.L_vector = this;
+        this.model.nodes.on('remove', this.remove_node, this);
+    },
+
+    remove_node: function(node_model) {
+        var point = _(this.node_point).pop(node_model.id);
+        this.feature.geometry.removeComponent(point);
+        this.trigger('geometry_change', this);
     }
 });
 
@@ -270,6 +283,7 @@ L.LayerVector = Backbone.View.extend({
         this.node_layer = new OpenLayers.Layer.Vector('Nodes', {});
         this.model.nodes.forEach(this.add_node, this);
         this.model.nodes.on('add', this.add_node, this);
+        this.model.nodes.on('remove', this.remove_node, this);
         this.way_vectors = {};
         this.way_layer = new OpenLayers.Layer.Vector('Ways', {});
         this.model.ways.forEach(this.add_way, this);
@@ -285,6 +299,11 @@ L.LayerVector = Backbone.View.extend({
         this.node_layer.addFeatures([node_vector.feature]);
     },
 
+    remove_node: function(node_model) {
+        var node_feature = this.node_vectors[node_model.id].feature;
+        this.node_layer.removeFeatures([node_feature]);
+    },
+
     add_way: function(way_model) {
         var way_vector = new L.WayVector({
             layer_vector: this,
@@ -292,6 +311,11 @@ L.LayerVector = Backbone.View.extend({
         });
         this.way_vectors[way_model.id] = way_vector;
         this.way_layer.addFeatures([way_vector.feature]);
+        way_vector.on('geometry_change', this.geometry_change, this);
+    },
+
+    geometry_change: function(way_vector) {
+        this.way_layer.drawFeature(way_vector.feature);
     }
 });
 
@@ -359,8 +383,7 @@ L.NodeView = Backbone.View.extend({
     delete: function(evt) {
         evt.preventDefault();
         this.close()
-        this.trigger('remove');
-        this.model.$xml.remove();
+        this.model.destroy();
     },
 
     close: function(evt) {
