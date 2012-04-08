@@ -2,6 +2,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename=filename) }}">
 {%- endmacro %}
 
+{% macro link_less(filename) -%}
+  <link rel="stylesheet/less" href="{{ url_for('static', filename=filename) }}">
+{%- endmacro %}
+
 {% macro script_src(filename) -%}
   <script src="{{ url_for('static', filename=filename) }}"></script>
 {%- endmacro %}
