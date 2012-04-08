@@ -30,8 +30,8 @@ L.EditingContext = function(map) {
     };
 
     var download_button = $('<a href="#" class="button">').text('download');
-    self.node_layer = new OpenLayers.Layer.Vector('Nodes', {});
-    self.node_layer.styleMap =  new OpenLayers.StyleMap({
+
+    var node_style_map = new OpenLayers.StyleMap({
         "default": new OpenLayers.Style({
             pointRadius: "15",
             fillColor: "#ffcc66",
@@ -47,22 +47,21 @@ L.EditingContext = function(map) {
         })
     });
 
-    self.way_layer = new OpenLayers.Layer.Vector('Ways', {});
-
     self.edit_osm = function(data) {
         self.original_data = $('osm', data)[0];
         self.current_data = $(self.original_data).clone()[0];
         $(self.current_data).attr('generator', L.xml_signature);
-        self.node_map = {};
         self.diff = function() {
             return L.xml_diff(self.original_data, self.current_data);
         };
         self.dispatch({type: 'osm_loaded'});
-        self.map.addLayers([self.node_layer, self.way_layer]);
-        self.display_osm(self.current_data);
+        self.model = new L.LayerModel({}, {xml: self.current_data});
+        self.vector = new L.LayerVector({model: this.model});
+        self.vector.node_layer.styleMap = node_style_map;
+        self.map.addLayers([self.vector.node_layer, self.vector.way_layer]);
 
         self.draw_node_control = new OpenLayers.Control.DrawFeature(
-            self.node_layer, OpenLayers.Handler.Point);
+            self.vector.node_layer, OpenLayers.Handler.Point);
         self.map.addControl(self.draw_node_control);
         self.draw_node_control.events.register('featureadded', null, function(evt) {
             var feature = evt.feature;
@@ -93,26 +92,25 @@ L.EditingContext = function(map) {
         });
 
         self.modify_control = new OpenLayers.Control.ModifyFeature(
-            self.node_layer,
+            self.vector.node_layer,
             {standalone: true});
         self.map.addControl(self.modify_control);
         self.modify_control.activate();
 
-        self.node_layer.events.on({
+        self.vector.node_layer.events.on({
             'featuremodified': function(evt) {
                 var feature = evt.feature;
                 var new_position = L.invproj(feature.geometry.clone());
                 self.node_view.update_position(new_position);
-                var way_features = $(feature.osm_node).data('view-ways');
-                self.way_layer.eraseFeatures(way_features);
-                $.each(way_features, function(i, feature) {
-                    self.way_layer.drawFeature(feature);
-                });
+                feature.L_vector.model.ways.forEach(function(way) {
+                    var way_feature = self.vector.way_vectors[way.id].feature;
+                    self.vector.way_layer.drawFeature(way_feature);
+                }, this);
             }
         });
 
         self.select_control = new OpenLayers.Control.SelectFeature(
-            self.node_layer,
+            self.vector.node_layer,
             {
                 onSelect: self.modify_control.selectFeature,
                 onUnselect: self.modify_control.unselectFeature,
@@ -122,8 +120,7 @@ L.EditingContext = function(map) {
             'featurehighlighted': function(e) {
                 self.node_create.hide();
                 var feature = e.feature;
-                var node_id = $(feature.osm_node).attr('id');
-                var node_model = self.model.nodes.get(node_id);
+                var node_model = feature.L_vector.model;
                 self.node_view = new L.NodeView({model: node_model});
                 self.node_view.on('close', function() {
                     self.node_view.$el.remove();
@@ -131,14 +128,12 @@ L.EditingContext = function(map) {
                     self.select_control.unselect(feature);
                 });
                 self.node_view.on('remove', function() {
-                    var node = feature.osm_node
-                    self.node_layer.eraseFeatures([feature]);
-                    var way_features = $(node).data('view-ways');
-                    self.way_layer.eraseFeatures(way_features);
-                    $.each(way_features, function(i, way_feature) {
+                    self.vector.node_layer.eraseFeatures([feature]);
+                    feature.L_vector.model.ways.forEach(function(way) {
+                        var way_feature = self.vector.way_vectors[way.id].feature;
                         way_feature.geometry.removeComponent(feature.geometry);
-                        self.way_layer.drawFeature(way_feature);
-                    });
+                        self.vector.way_layer.drawFeature(way_feature);
+                    }, this);
                 });
                 self.node_view.$el.insertAfter($('#menu'));
             },
@@ -170,50 +165,6 @@ L.EditingContext = function(map) {
     });
     L.message("Select area then click ", download_button);
 
-    self.display_osm_node = function(node, feature) {
-        var $node = $(node);
-        if(! feature) {
-            var lon = $node.attr('lon'),
-                lat = $node.attr('lat');
-            var point = new OpenLayers.Geometry.Point(lon, lat);
-            feature = new OpenLayers.Feature.Vector(L.proj(point));
-            self.node_layer.addFeatures([feature]);
-        }
-        feature.osm_node = node;
-        $node.data('view-feature', feature);
-        $node.data('view-ways', []);
-        self.node_map[$node.attr('id')] = node;
-    };
-
-    self.display_osm_way = function(way, feature) {
-        if(! feature) {
-            var line_string = new OpenLayers.Geometry.LineString();
-            $('> nd', way).each(function(i, nd) {
-                var node = self.node_map[$(nd).attr('ref')];
-                var node_feature = $(node).data('view-feature');
-                line_string.addComponent(node_feature.geometry);
-            });
-            feature = new OpenLayers.Feature.Vector(line_string);
-            self.way_layer.addFeatures([feature]);
-        }
-        feature.osm_way = way;
-        $('> nd', way).each(function(i, nd) {
-            var node = self.node_map[$(nd).attr('ref')];
-            $(node).data('view-ways').push(feature);
-        });
-    };
-
-    self.display_osm = function(osm_doc) {
-        self.model = new L.LayerModel({}, {xml: osm_doc});
-        $('> node', osm_doc).each(function() {
-            self.display_osm_node(this);
-        });
-
-        $('> way', osm_doc).each(function() {
-            self.display_osm_way(this);
-        });
-    };
-
     return self;
 };
 
@@ -231,6 +182,7 @@ L.NodeModel = Backbone.Model.extend({
             lon: this.$xml.attr('lon')
         });
         this.id = this.$xml.attr('id');
+        this.ways = new Backbone.Collection;
     },
 
     change: function(options) {
@@ -251,8 +203,10 @@ L.WayModel = Backbone.Model.extend({
         this.nodes = new Backbone.Collection(
             _(this.$xml.find('> nd')).map(function(nd_xml) {
                 var node_id = $(nd_xml).attr('ref');
-                return options['nodes'].get(node_id);
-            }));
+                var node = options['nodes'].get(node_id);
+                node.ways.add(this);
+                return node;
+            }, this));
     }
 });
 
@@ -280,6 +234,64 @@ L.LayerModel = Backbone.Model.extend({
         }
         this.nodes.on('all', propagate_events, this);
         this.ways.on('all', propagate_events, this);
+    }
+});
+
+
+L.NodeVector = Backbone.View.extend({
+    initialize: function(options) {
+        this.layer_vector = options['layer_vector'];
+        var point = new OpenLayers.Geometry.Point(
+            this.model.get('lon'),
+            this.model.get('lat'));
+        this.feature = new OpenLayers.Feature.Vector(L.proj(point));
+        this.feature.L_vector = this;
+    }
+});
+
+
+L.WayVector = Backbone.View.extend({
+    initialize: function(options) {
+        this.layer_vector = options['layer_vector'];
+        var line_string = new OpenLayers.Geometry.LineString();
+        this.model.nodes.forEach(function(node_model) {
+            var node_vector = this.layer_vector.node_vectors[node_model.id];
+            line_string.addComponent(node_vector.feature.geometry);
+        }, this);
+        this.feature = new OpenLayers.Feature.Vector(line_string);
+        this.feature.L_vector = this;
+    }
+});
+
+
+L.LayerVector = Backbone.View.extend({
+    initialize: function() {
+        this.node_vectors = {};
+        this.node_layer = new OpenLayers.Layer.Vector('Nodes', {});
+        this.model.nodes.forEach(this.add_node, this);
+        this.model.nodes.on('add', this.add_node, this);
+        this.way_vectors = {};
+        this.way_layer = new OpenLayers.Layer.Vector('Ways', {});
+        this.model.ways.forEach(this.add_way, this);
+        this.model.ways.on('add', this.add_way, this);
+    },
+
+    add_node: function(node_model) {
+        var node_vector = new L.NodeVector({
+            layer_vector: this,
+            model: node_model
+        });
+        this.node_vectors[node_model.id] = node_vector;
+        this.node_layer.addFeatures([node_vector.feature]);
+    },
+
+    add_way: function(way_model) {
+        var way_vector = new L.WayVector({
+            layer_vector: this,
+            model: way_model
+        });
+        this.way_vectors[way_model.id] = way_vector;
+        this.way_layer.addFeatures([way_vector.feature]);
     }
 });
 
