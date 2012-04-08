@@ -28,7 +28,7 @@ L.main = function() {
     L.editing_context = L.EditingContext(L.map);
     L.editing_context.clear_download_ui();
     L.editing_context.edit_osm(L.orig_xml.parentNode);
-    L.editing_context.model.on('change', L.update_layer_xml);
+    L.editing_context.model.on('change add remove', L.update_layer_xml);
     L.update_layer_xml();
 }
 

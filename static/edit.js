@@ -67,15 +67,17 @@ L.EditingContext = function(map) {
         self.draw_node_control.events.register('featureadded', null, function(evt) {
             var feature = evt.feature;
             var coords = L.invproj(feature.geometry.clone());
-            var node = L.xml_node('node');
-            $(node).attr({
+            var node_xml = L.xml_node('node');
+            $(node_xml).attr({
                 lon: coords.x,
                 lat: coords.y,
                 id: self.generate_id(),
                 version: 1
             });
-            $(self.current_data).append(node);
-            self.display_osm_node(node, feature);
+            var node_model = new L.NodeModel({}, {xml: node_xml});
+            self.model.nodes.add(node_model);
+            $(self.current_data).append(node_xml);
+            self.display_osm_node(node_xml, feature);
             self.draw_node_control.deactivate();
             self.select_control.activate();
             self.modify_control.activate();
@@ -229,11 +231,14 @@ L.NodeModel = Backbone.Model.extend({
             lon: this.$xml.attr('lon')
         });
         this.id = this.$xml.attr('id');
+    },
 
-        this.on('change:lat', function(evt, value) {
-            this.$xml.attr('lat', value); }, this);
-        this.on('change:lon', function(evt, value) {
-            this.$xml.attr('lon', value); }, this);
+    change: function(options) {
+        _(['lat', 'lon']).forEach(function(name) {
+            if(options['changes'][name]) {
+                this.$xml.attr(name, this.get(name));
+            }}, this);
+        Backbone.Model.prototype.change.apply(this, arguments);
     }
 });
 
