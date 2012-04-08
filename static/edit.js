@@ -97,18 +97,6 @@ L.EditingContext = function(map) {
         self.map.addControl(self.modify_control);
         self.modify_control.activate();
 
-        self.vector.node_layer.events.on({
-            'featuremodified': function(evt) {
-                var feature = evt.feature;
-                var new_position = L.invproj(feature.geometry.clone());
-                self.node_view.update_position(new_position);
-                feature.L_vector.model.ways.forEach(function(way) {
-                    var way_feature = self.vector.way_vectors[way.id].feature;
-                    self.vector.way_layer.drawFeature(way_feature);
-                }, this);
-            }
-        });
-
         self.select_control = new OpenLayers.Control.SelectFeature(
             self.vector.node_layer,
             {
@@ -241,14 +229,33 @@ L.LayerModel = Backbone.Model.extend({
 });
 
 
+L.node_point = function(node_model) {
+    return new OpenLayers.Geometry.Point(
+        node_model.get('lon'),
+        node_model.get('lat'));
+};
+
+L.update_point = function(point, new_data) {
+    point.x = new_data.x;
+    point.y = new_data.y;
+    point.clearBounds();
+}
+
+
 L.NodeVector = Backbone.View.extend({
     initialize: function(options) {
         this.layer_vector = options['layer_vector'];
-        var point = new OpenLayers.Geometry.Point(
-            this.model.get('lon'),
-            this.model.get('lat'));
-        this.feature = new OpenLayers.Feature.Vector(L.proj(point));
+        var geometry = L.proj(L.node_point(this.model));
+        this.feature = new OpenLayers.Feature.Vector(geometry);
         this.feature.L_vector = this;
+    },
+
+    vector_moved: function() {
+        var new_position = L.invproj(this.feature.geometry.clone());
+        this.model.set({
+            'lon': L.quantize(new_position.x),
+            'lat': L.quantize(new_position.y)
+        });
     }
 });
 
@@ -259,19 +266,29 @@ L.WayVector = Backbone.View.extend({
         this.node_point = {};
         var line_string = new OpenLayers.Geometry.LineString();
         this.model.nodes.forEach(function(node_model) {
-            var node_vector = this.layer_vector.node_vectors[node_model.id];
-            var point = node_vector.feature.geometry;
-            line_string.addComponent(point);
-            this.node_point[node_model.id] = point;
+            var point_geometry = L.proj(L.node_point(node_model));
+            line_string.addComponent(point_geometry);
+            this.node_point[node_model.id] = point_geometry;
         }, this);
         this.feature = new OpenLayers.Feature.Vector(line_string);
         this.feature.L_vector = this;
         this.model.nodes.on('remove', this.remove_node, this);
+        this.model.nodes.on('change', this.node_change, this);
     },
 
     remove_node: function(node_model) {
         var point = _(this.node_point).pop(node_model.id);
         this.feature.geometry.removeComponent(point);
+        this.trigger('geometry_change', this);
+    },
+
+    node_change: function(node_model, options) {
+        if(!(options['changes']['lat'] ||
+             options['changes']['lon'])) {
+            return;
+        }
+        L.update_point(this.node_point[node_model.id],
+                       L.proj(L.node_point(node_model)));
         this.trigger('geometry_change', this);
     }
 });
@@ -284,6 +301,15 @@ L.LayerVector = Backbone.View.extend({
         this.model.nodes.forEach(this.add_node, this);
         this.model.nodes.on('add', this.add_node, this);
         this.model.nodes.on('remove', this.remove_node, this);
+
+        this.node_layer.events.on({
+            'featuremodified': function(evt) {
+                var feature = evt.feature;
+                var node_vector = feature.L_vector;
+                node_vector.vector_moved();
+            }
+        });
+
         this.way_vectors = {};
         this.way_layer = new OpenLayers.Layer.Vector('Ways', {});
         this.model.ways.forEach(this.add_way, this);
@@ -332,6 +358,7 @@ L.NodeView = Backbone.View.extend({
 
     initialize: function() {
         this.render();
+        this.model.on('change', this.render, this);
     },
 
     render: function() {
@@ -370,14 +397,6 @@ L.NodeView = Backbone.View.extend({
                 this.model.$xml.append(tag);
             }
         }).bind(this));
-    },
-
-    update_position: function(new_position) {
-        this.model.set({
-            'lon': L.quantize(new_position.x),
-            'lat': L.quantize(new_position.y)
-        });
-        this.render();
     },
 
     delete: function(evt) {
