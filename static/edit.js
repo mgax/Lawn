@@ -372,11 +372,12 @@ L.NodeView = Backbone.View.extend({
     },
 
     save: function() {
-        var new_tags = _(this.$el.find('tr.tag')).map(function(tr) {
+        var new_tags = [];
+        _(this.$el.find('tr.tag')).forEach(function(tr) {
             var key = $(tr).find('input[name=key]').val();
             var value = $(tr).find('input[name=value]').val();
             if(key && value) {
-                return {'key': key, 'value': value};
+                new_tags.push({'key': key, 'value': value});
             }
         }, this);
         this.model.update_tags(new_tags);
