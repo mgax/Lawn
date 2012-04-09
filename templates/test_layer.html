@@ -16,7 +16,7 @@
 (function(L) {
 
 L.update_layer_xml = function() {
-    var layer_xml = L.editing_context.model.xml;
+    var layer_xml = L.layer_model.xml;
     var layer_xml_str = L.serialize_xml(layer_xml);
     $('.test-layer-xml pre').text(layer_xml_str);
     prettyPrint();
@@ -24,11 +24,10 @@ L.update_layer_xml = function() {
 
 L.main = function() {
     L.initialize_map({lon: 26.097, lat: 44.435, zoom: 17});
-    L.orig_xml = L.parse_xml(L.template['layer-orig-xml']());
-    L.editing_context = L.EditingContext(L.map);
-    L.editing_context.clear_download_ui();
-    L.editing_context.edit_osm(L.orig_xml.parentNode);
-    L.editing_context.model.on('change add remove', function() {
+    L.layer_xml = L.parse_xml(L.template['layer-orig-xml']());
+    L.layer_model = new L.LayerModel({}, {xml: L.layer_xml});
+    L.layer_editor = new L.LayerEditor({model: L.layer_model, map: L.map});
+    L.layer_model.on('change add remove', function() {
         _.defer(L.update_layer_xml);
     });
     L.update_layer_xml();
