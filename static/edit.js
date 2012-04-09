@@ -120,8 +120,12 @@ L.EditingContext = function(map) {
     return self;
 };
 
-L.xml_node = function(tag_name) {
-    return $.parseXML('<' + tag_name + '/>').firstChild;
+L.xml_node = function(tag_name, attributes) {
+    var xml = $.parseXML('<' + tag_name + '/>').firstChild;
+    if(attributes) {
+        $(xml).attr(attributes);
+    }
+    return xml;
 };
 
 
@@ -129,17 +133,37 @@ L.NodeModel = Backbone.Model.extend({
     initialize: function(attributes, options) {
         this.xml = options['xml'];
         this.$xml = $(this.xml);
+        var tags = _(this.$xml.find('> tag')).map(function(tag_xml) {
+            return {
+                key: $(tag_xml).attr('k'),
+                value: $(tag_xml).attr('v')
+            }
+        });
         this.set({
             lat: this.$xml.attr('lat'),
-            lon: this.$xml.attr('lon')
+            lon: this.$xml.attr('lon'),
+            tags: tags
         });
         this.id = this.$xml.attr('id');
         this.ways = new Backbone.Collection;
     },
 
+    update_tags: function(new_tags) {
+        if(_(new_tags).isEqual(this.get('tags'))) {
+            return; }
+        this.$xml.find('> tag').remove();
+        _(new_tags).forEach(function(tag) {
+            var attr = {k: tag['key'], v: tag['value']};
+            var tag_xml = $(L.xml_node('tag', attr));
+            this.$xml.append(tag_xml);
+        }, this);
+        this.set({tags: new_tags});
+    },
+
     change: function(options) {
+        var changes = options ? (options['changes'] || {}) : {};
         _(['lat', 'lon']).forEach(function(name) {
-            if(options['changes'][name]) {
+            if(changes[name]) {
                 this.$xml.attr(name, this.get(name));
             }}, this);
         Backbone.Model.prototype.change.apply(this, arguments);
@@ -368,15 +392,14 @@ L.NodeView = Backbone.View.extend({
     },
 
     save: function() {
-        $('> tag', this.model.xml).remove();
-        $('tr.tag', this.el).each(_(function(i, tr) {
-            var key = $('input[name=key]', tr).val();
-            var value = $('input[name=value]', tr).val();
+        var new_tags = _(this.$el.find('tr.tag')).map(function(tr) {
+            var key = $(tr).find('input[name=key]').val();
+            var value = $(tr).find('input[name=value]').val();
             if(key && value) {
-                var tag = $(L.xml_node('tag')).attr({k: key, v: value});
-                this.model.$xml.append(tag);
+                return {'key': key, 'value': value};
             }
-        }).bind(this));
+        }, this);
+        this.model.update_tags(new_tags);
     },
 
     delete: function(evt) {
