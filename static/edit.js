@@ -64,41 +64,45 @@ L.SelectArea = Backbone.View.extend({
 });
 
 
-L.EditingContext = function(map) {
-    var self = {map: map};
+L.EditingContext = function(options) {
+    this.initialize.apply(this, arguments);
+}
 
-    self.dispatch = L.Dispatch(self);
+_.extend(L.EditingContext.prototype, Backbone.Events, {
 
-    self.select_area = new L.SelectArea({map: self.map});
-    L.message("Select area then click ", self.select_area.el);
-    self.select_area.on('select', function(bbox) {
-        self.clear_download_ui();
-        var bbox_values = [bbox.left, bbox.bottom, bbox.right, bbox.top];
-        var bbox_arg = (bbox_values).map(L.quantize).join(',');
-        L.download(bbox_arg).done(function(data) {
-            self.edit_osm(data);
+    initialize: function(options) {
+        this.map = options['map'];
+    },
+
+    begin_selection: function() {
+        this.select_area = new L.SelectArea({map: this.map});
+        L.message("Select area then click ", this.select_area.el);
+        this.select_area.on('select', function(bbox) {
+            L.hide_message();
+            this.select_area.cleanup();
+            var bbox_values = [bbox.left, bbox.bottom, bbox.right, bbox.top];
+            var bbox_arg = (bbox_values).map(L.quantize).join(',');
+            L.download(bbox_arg).done(_.bind(this.edit_osm, this));
+        }, this);
+    },
+
+    edit_osm: function(data) {
+        this.original_data = $('osm', data)[0];
+        this.current_data = $(this.original_data).clone()[0];
+        $(this.current_data).attr('generator', L.xml_signature);
+        this.trigger('osm_loaded');
+        this.model = new L.LayerModel({}, {xml: this.current_data});
+        this.layer_editor = new L.LayerEditor({
+            model: this.model,
+            map: this.map
         });
-    });
+    },
 
-    self.clear_download_ui = function() {
-        L.hide_message();
-        self.select_area.cleanup();
-    };
+    diff: function() {
+        return L.xml_diff(this.original_data, this.current_data);
+    }
 
-    self.edit_osm = function(data) {
-        self.original_data = $('osm', data)[0];
-        self.current_data = $(self.original_data).clone()[0];
-        $(self.current_data).attr('generator', L.xml_signature);
-        self.diff = function() {
-            return L.xml_diff(self.original_data, self.current_data);
-        };
-        self.dispatch({type: 'osm_loaded'});
-        self.model = new L.LayerModel({}, {xml: self.current_data});
-        self.layer_editor = new L.LayerEditor({model: self.model, map: self.map});
-    };
-
-    return self;
-};
+});
 
 L.xml_node = function(tag_name, attributes) {
     var xml = $.parseXML('<' + tag_name + '/>').firstChild;

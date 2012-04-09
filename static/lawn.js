@@ -107,30 +107,34 @@ L.main = function() {
     L.initialize_map();
     var menu_div = $('#menu');
     var edit_button = $('<a href="#" class="button">').text('edit');
+
+    L.EC = new L.EditingContext({map: L.map});
+
+    L.EC.on('osm_loaded', function() {
+        $('<div>').append(
+            'upload to [',
+            $('<a href="#" class="download button">').click(function(evt) {
+                evt.preventDefault();
+                L.api_upload(L.EC.diff());
+            }).text('osm api'),
+            ']; download [',
+            $('<a href="#" class="download button">').click(function(evt) {
+                evt.preventDefault();
+                L.download_xml(L.EC.current_data, 'layer.osm');
+            }).text('layer'),
+            '], [',
+            $('<a href="#" class="download button">').click(function(evt) {
+                evt.preventDefault();
+                L.download_xml(L.EC.diff(), 'diff.osc');
+            }).text('diff'),
+            ']'
+        ).appendTo(menu_div);
+    });
+
     edit_button.appendTo(menu_div).click(function(evt) {
         evt.preventDefault();
-        L.EC = L.EditingContext(L.map);
         edit_button.hide();
-        L.EC.on('osm_loaded', function() {
-            $('<div>').append(
-                'upload to [',
-                $('<a href="#" class="download button">').click(function(evt) {
-                    evt.preventDefault();
-                    L.api_upload(L.EC.diff());
-                }).text('osm api'),
-                ']; download [',
-                $('<a href="#" class="download button">').click(function(evt) {
-                    evt.preventDefault();
-                    L.download_xml(L.EC.current_data, 'layer.osm');
-                }).text('layer'),
-                '], [',
-                $('<a href="#" class="download button">').click(function(evt) {
-                    evt.preventDefault();
-                    L.download_xml(L.EC.diff(), 'diff.osc');
-                }).text('diff'),
-                ']'
-            ).appendTo(menu_div);
-        });
+        L.EC.begin_selection();
     });
 };
 
