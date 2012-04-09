@@ -1,6 +1,22 @@
 (function(L) {
 
 
+L.node_style_map = new OpenLayers.StyleMap({
+    "default": new OpenLayers.Style({
+        pointRadius: "15",
+        fillColor: "#ffcc66",
+        fillOpacity: 0.5,
+        strokeColor: "#ff9933",
+        strokeWidth: 2,
+        graphicZIndex: 1
+    }),
+    "select": new OpenLayers.Style({
+        fillColor: "#66ccff",
+        strokeColor: "#3399ff",
+        graphicZIndex: 2
+    })
+});
+
 L.EditingContext = function(map) {
     var self = {map: map};
 
@@ -23,29 +39,7 @@ L.EditingContext = function(map) {
     self.download_layer.addFeatures([box]);
     self.edit_control.selectControl.select(box);
 
-    self._last_generated_id = 0;
-    self.generate_id = function() {
-        self._last_generated_id -= 1;
-        return self._last_generated_id;
-    };
-
     var download_button = $('<a href="#" class="button">').text('download');
-
-    var node_style_map = new OpenLayers.StyleMap({
-        "default": new OpenLayers.Style({
-            pointRadius: "15",
-            fillColor: "#ffcc66",
-            fillOpacity: 0.5,
-            strokeColor: "#ff9933",
-            strokeWidth: 2,
-            graphicZIndex: 1
-        }),
-        "select": new OpenLayers.Style({
-            fillColor: "#66ccff",
-            strokeColor: "#3399ff",
-            graphicZIndex: 2
-        })
-    });
 
     self.edit_osm = function(data) {
         self.original_data = $('osm', data)[0];
@@ -56,46 +50,7 @@ L.EditingContext = function(map) {
         };
         self.dispatch({type: 'osm_loaded'});
         self.model = new L.LayerModel({}, {xml: self.current_data});
-        self.vector = new L.LayerVector({model: this.model});
-        self.vector.node_layer.styleMap = node_style_map;
-        self.map.addLayers([self.vector.node_layer, self.vector.way_layer]);
-
-        self.node_create = new L.NodeCreate({
-            layer_vector: self.vector,
-            generate_id: self.generate_id
-        });
-        self.map.addControl(self.node_create.draw_node_control);
-        self.node_create.$el.insertAfter($('#menu'));
-
-        self.vector_edit = new L.VectorEdit({layer_vector: self.vector});
-        self.vector_edit.on('select', function(feature) {
-            self.node_create.hide();
-            var node_model = feature.L_vector.model;
-            self.node_view = new L.NodeView({model: node_model});
-            self.node_view.on('close', function() {
-                self.node_view.$el.remove();
-                self.node_view = null;
-                self.vector_edit.select_control.unselect(feature);
-            });
-            self.node_view.$el.insertAfter($('#menu'));
-        }, this);
-        self.vector_edit.on('deselect', function() {
-            if(self.node_view) self.node_view.close();
-            self.node_create.show();
-        }, this);
-
-        self.map.addControl(self.vector_edit.modify_control);
-        self.map.addControl(self.vector_edit.select_control);
-        self.vector_edit.activate();
-
-        self.node_create.on('begin_create_node', function() {
-            self.vector_edit.deactivate();
-        });
-        self.node_create.on('create_node', function(node_model, node_feature) {
-            self.model.nodes.add(node_model, {feature: node_feature});
-            self.vector_edit.activate();
-            self.vector_edit.select_control.select(node_feature);
-        });
+        self.layer_editor = new L.LayerEditor({model: self.model, map: self.map});
     };
 
     self.clear_download_ui = function() {
@@ -504,6 +459,61 @@ L.VectorEdit = Backbone.View.extend({
     deactivate: function() {
         this.select_control.deactivate();
         this.modify_control.deactivate();
+    }
+});
+
+
+L.LayerEditor = Backbone.View.extend({
+    initialize: function(options) {
+        this.map = options['map'];
+        this.vector = new L.LayerVector({model: this.model});
+        this.vector.node_layer.styleMap = L.node_style_map;
+        this.map.addLayers([this.vector.node_layer, this.vector.way_layer]);
+
+        this._last_generated_id = 0;
+        this.node_create = new L.NodeCreate({
+            layer_vector: this.vector,
+            generate_id: _.bind(this.generate_id, this) // TODO generate_id
+        });
+        this.map.addControl(this.node_create.draw_node_control);
+        this.node_create.$el.insertAfter($('#menu'));
+
+        this.vector_edit = new L.VectorEdit({layer_vector: this.vector});
+        this.vector_edit.on('select', function(feature) {
+            this.node_create.hide();
+            var node_model = feature.L_vector.model;
+            this.node_view = new L.NodeView({model: node_model});
+            this.node_view.on('close', function() {
+                this.node_view.$el.remove();
+                this.node_view = null;
+                this.vector_edit.select_control.unselect(feature);
+            }, this);
+            this.node_view.$el.insertAfter($('#menu'));
+        }, this);
+        this.vector_edit.on('deselect', function() {
+            if(this.node_view) {
+                this.node_view.close();
+            }
+            this.node_create.show();
+        }, this);
+
+        this.map.addControls([this.vector_edit.modify_control,
+                              this.vector_edit.select_control]);
+        this.vector_edit.activate();
+
+        this.node_create.on('begin_create_node', function() {
+            this.vector_edit.deactivate();
+        }, this);
+        this.node_create.on('create_node', function(node_model, node_feature) {
+            this.model.nodes.add(node_model, {feature: node_feature});
+            this.vector_edit.activate();
+            this.vector_edit.select_control.select(node_feature);
+        }, this);
+    },
+
+    generate_id: function() {
+        this._last_generated_id -= 1;
+        return this._last_generated_id;
     }
 });
 
