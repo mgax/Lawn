@@ -96,6 +96,7 @@ _.extend(L.EditingContext.prototype, Backbone.Events, {
             model: this.model,
             map: this.map
         });
+        this.layer_editor.$el.appendTo($('#menu'));
     },
 
     diff: function() {
@@ -401,7 +402,6 @@ L.NodeView = Backbone.View.extend({
 L.NodeCreate = Backbone.View.extend({
 
     templateName: 'node-create',
-    className: 'node-properties',
 
     events: {
         'click .node-create-button a': 'buttonClick'
@@ -494,6 +494,9 @@ L.VectorEdit = Backbone.View.extend({
 
 
 L.LayerEditor = Backbone.View.extend({
+
+    className: 'layer_editor-buttons',
+
     initialize: function(options) {
         this.map = options['map'];
         this.vector = new L.LayerVector({model: this.model});
@@ -506,7 +509,7 @@ L.LayerEditor = Backbone.View.extend({
             generate_id: _.bind(this.generate_id, this) // TODO generate_id
         });
         this.map.addControl(this.node_create.draw_node_control);
-        this.node_create.$el.insertAfter($('#menu'));
+        this.node_create.$el.appendTo(this.el);
 
         this.vector_edit = new L.VectorEdit({layer_vector: this.vector});
         this.vector_edit.on('select', function(feature) {
@@ -518,7 +521,7 @@ L.LayerEditor = Backbone.View.extend({
                 this.node_view = null;
                 this.vector_edit.select_control.unselect(feature);
             }, this);
-            this.node_view.$el.insertAfter($('#menu'));
+            this.node_view.$el.appendTo(this.el);
         }, this);
         this.vector_edit.on('deselect', function() {
             if(this.node_view) {

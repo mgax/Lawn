@@ -27,6 +27,7 @@ L.main = function() {
     L.layer_xml = L.parse_xml(L.template['layer-orig-xml']());
     L.layer_model = new L.LayerModel({}, {xml: L.layer_xml});
     L.layer_editor = new L.LayerEditor({model: L.layer_model, map: L.map});
+    L.layer_editor.$el.appendTo($('#menu'));
     L.layer_model.on('change add remove', function() {
         _.defer(L.update_layer_xml);
     });

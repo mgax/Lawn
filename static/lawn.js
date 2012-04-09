@@ -105,7 +105,8 @@ L.initialize_map = function(options) {
 
 L.main = function() {
     L.initialize_map();
-    var menu_div = $('#menu');
+    var buttons_div = $('<div class="editing_context-actions">');
+    buttons_div.appendTo($('#menu'));
     var edit_button = $('<a href="#" class="button">').text('edit');
 
     L.EC = new L.EditingContext({map: L.map});
@@ -128,10 +129,10 @@ L.main = function() {
                 L.download_xml(L.EC.diff(), 'diff.osc');
             }).text('diff'),
             ']'
-        ).appendTo(menu_div);
+        ).appendTo(buttons_div);
     });
 
-    edit_button.appendTo(menu_div).click(function(evt) {
+    edit_button.appendTo(buttons_div).click(function(evt) {
         evt.preventDefault();
         edit_button.hide();
         L.EC.begin_selection();

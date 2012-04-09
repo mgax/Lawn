@@ -8,34 +8,22 @@ body,
     margin: 0;
 }
 
-#menu {
+.smoky-box {
     z-index: 1100;
     position: absolute;
+    background: rgba(245, 245, 245, 0.85);
+    box-shadow: 0px 0px 4px 2px #888;
+}
+
+#menu {
+    .smoky-box;
     top: 0;
     right: 0;
     max-height: 100%;
     min-width: 100px;
     padding: 0 5px;
     overflow: auto;
-    background: rgba(245, 245, 245, 0.85);
-    box-shadow: 0px 0px 4px 2px #888;
     border-bottom-left-radius: 5px;
-}
-
-.floating-box {
-    z-index: 1100;
-    position: absolute;
-    top: 50px;
-    right: 0;
-    padding: 5px;
-    background: rgba(255, 255, 255, 0.75);
-    border: 2px solid #888;
-    border-radius: 5px;
-}
-
-.node-properties,
-.node-create {
-    .floating-box;
 }
 
 #message {
