@@ -160,13 +160,9 @@ L.NodeModel = Backbone.Model.extend({
         this.set({tags: new_tags});
     },
 
-    change: function(options) {
-        var changes = options ? (options['changes'] || {}) : {};
-        _(['lat', 'lon']).forEach(function(name) {
-            if(changes[name]) {
-                this.$xml.attr(name, this.get(name));
-            }}, this);
-        Backbone.Model.prototype.change.apply(this, arguments);
+    update_position: function(new_position) {
+        this.$xml.attr(new_position);
+        this.set(new_position);
     },
 
     destroy: function() {
@@ -255,7 +251,7 @@ L.NodeVector = Backbone.View.extend({
 
     vector_moved: function() {
         var new_position = L.invproj(this.feature.geometry.clone());
-        this.model.set({
+        this.model.update_position({
             'lon': L.quantize(new_position.x),
             'lat': L.quantize(new_position.y)
         });
