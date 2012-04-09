@@ -3,7 +3,7 @@
 
 function get_test_xml(name) {
     var deferred = $.Deferred();
-    $.get('static/test_delta_data/' + name, function(data) {
+    $.get(L.STATIC_URL + 'test_delta_data/' + name, function(data) {
         var root_node = null;
         if(data) {
             var root_node = $.parseXML(data.replace(/>\s+</g, '><')).firstChild;

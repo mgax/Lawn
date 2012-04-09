@@ -1,0 +1,42 @@
+<script type="text/template+html" name="node-view-info">
+  <div class="node-view-info">
+    <div class="button-box">[<a href="#" class="close button">x</a>]</div>
+    <div>node <%= id %></div>
+    <div>lat: <span class="node-lat"><%= lat %></span></div>
+    <div>lat: <span class="node-lon"><%= lon %></span></div>
+  </div>
+</script>
+
+<script type="text/template+html" name="tag-tr">
+  <tr class="tag">
+    <td><input name="key" value="<%= key %>"></td>
+    <td><input name="value" value="<%= value %>"></td>
+  </tr>
+</script>
+
+<script type="text/template+html" name="tags-table">
+  <table class="node-tags">
+    <thead>
+      <tr>
+        <th>Key</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% _(tags).forEach(function(tag) { %>
+        <%= template['tag-tr'](tag) %>
+      <% }); %>
+    </tbody>
+  </table>
+  <div>
+      [<a href="#" class="new button">new tag</a>]
+      [<a href="#" class="delete button">delete node</a>]
+  </div>
+</script>
+
+<script type="text/template+html" name="node-create">
+  <div class="node-create-message" style="display: none">Click on map</div>
+  <div class="node-create-button">
+      [<a href="#" class="new button">create node</a>]
+  </div>
+</script>

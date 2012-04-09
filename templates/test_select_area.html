@@ -1,0 +1,29 @@
+{% extends 'map_page.html' %}
+{% from 'bits.html' import link_less -%}
+
+{% block body %}
+
+<script>
+(function(L) {
+
+L.main = function() {
+    L.initialize_map({lon: 26.097, lat: 44.435, zoom: 17});
+    L.select_area = new L.SelectArea({map: L.map});
+    L.message("Select area then click ", L.select_area.el);
+    L.select_area.on('select', function(bbox) {
+        var bbox_values = [bbox.left, bbox.bottom, bbox.right, bbox.top];
+        console.log((bbox_values).map(L.quantize));
+    });
+}
+
+$(document).ready(function() {
+    L.load_templates();
+    setTimeout(L.main, 200); // fix weird openlayers layout behaviour
+});
+
+})(window.L);
+</script>
+
+{% include 'edit_js_views.html' %}
+
+{% endblock %}

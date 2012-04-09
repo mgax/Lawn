@@ -2,6 +2,7 @@
 
 import os
 import datetime
+from path import path
 import flask
 import flaskext.script
 import dbsession
@@ -47,9 +48,15 @@ def upload_changeset():
     return 'Changeset %d uploaded' % changeset_id
 
 
-@webpages.route('/test_delta')
-def test_delta():
-    return flask.render_template('test_delta.html')
+@webpages.route('/test/<string:test_name>')
+def test_page(test_name):
+    if '..' in test_name:
+        flask.abort(404)
+    tmpl_name = 'test_%s.html' % test_name
+    tmpl_path = path(__file__).parent.abspath()/'templates'/tmpl_name
+    if not tmpl_path.exists():
+        flask.abort(404)
+    return flask.render_template(tmpl_name)
 
 
 def create_app():

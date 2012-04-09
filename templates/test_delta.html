@@ -1,10 +1,11 @@
-<script src="{{ url_for('static', filename='lib/jquery-1.7.1.min.js') }}"></script>
-<script src="{{ url_for('static', filename='lib/vkbeautify.0.93.beta.js') }}"></script>
-  <script src="{{ config['OPENLAYERS_JS'] }}"></script>
-<script src="{{ url_for('static', filename='lawn.js') }}"></script>
-<script src="{{ url_for('static', filename='edit.js') }}"></script>
-<script src="{{ url_for('static', filename='delta.js') }}"></script>
+{% extends 'map_page.html' %}
+
+{% block body %}
 <script src="{{ url_for('static', filename='test_delta.js') }}"></script>
-<script>$(function() {
+<script>
+L.STATIC_URL = "{{ url_for('static', filename='') }}";
+$(document).ready(function() {
     L.xml_diff_test();
-});</script>
+});
+</script>
+{% endblock %}

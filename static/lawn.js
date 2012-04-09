@@ -1,5 +1,18 @@
 (function() {
 
+_.mixin({
+    pop: function(obj, key) {
+        if(_.isArray(obj)) {
+            return obj.splice(key, 1)[0];
+        }
+        if(_.has(obj, key)) {
+            var value = obj[key];
+            delete obj[key];
+            return value;
+        }
+    }
+});
+
 L.wgs84 = new OpenLayers.Projection("EPSG:4326");
 L.map_proj = new OpenLayers.Projection("EPSG:900913");
 
@@ -9,6 +22,11 @@ L.proj = function(value) {
 
 L.invproj = function(value) {
     return value.transform(L.map_proj, L.wgs84);
+};
+
+L.precision = Math.pow(10, 7);
+L.quantize = function(value) {
+    return parseInt(value * L.precision) / L.precision;
 };
 
 L.download = function(bbox) {
@@ -26,6 +44,14 @@ L.message = function() {
 
 L.hide_message = function() {
     $('#message').removeClass('visible');
+};
+
+L.parse_xml = function(xml_src) {
+    var root_node = $.parseXML(xml_src.replace(/>\s+</g, '><')).firstChild;
+    $('*', root_node).each(function(i, node) {
+        node.namespaceURI = "";
+    });
+    return root_node;
 };
 
 L.serialize_xml = function(xml_root) {
@@ -64,41 +90,67 @@ L.api_upload = function(osm_diff) {
 };
 
 
-$(document).ready(function() {
-    setTimeout(L.initialize, 200); // fix weird openlayers layout behaviour
-});
-
-L.initialize = function() {
+L.initialize_map = function(options) {
+    options = _({
+        lon: 13.4055,
+        lat: 52.5219,
+        zoom: 13
+    }).extend(options);
     L.map = new OpenLayers.Map('map');
     L.map.addLayer(new OpenLayers.Layer.OSM("OpenStreetMap"));
-    L.map.setCenter(L.proj(new OpenLayers.LonLat(13.4055, 52.5219)), 13);
+    var center = new OpenLayers.LonLat(options['lon'], options['lat']);
+    L.map.setCenter(L.proj(center), options['zoom']);
+};
 
-    var menu_div = $('#menu');
+
+L.main = function() {
+    L.initialize_map();
+    var buttons_div = $('<div class="editing_context-actions">');
+    buttons_div.appendTo($('#menu'));
     var edit_button = $('<a href="#" class="button">').text('edit');
-    edit_button.appendTo(menu_div).click(function(evt) {
+
+    L.EC = new L.EditingContext({map: L.map});
+
+    L.EC.on('osm_loaded', function() {
+        $('<div>').append(
+            'upload to [',
+            $('<a href="#" class="download button">').click(function(evt) {
+                evt.preventDefault();
+                L.api_upload(L.EC.diff());
+            }).text('osm api'),
+            ']; download [',
+            $('<a href="#" class="download button">').click(function(evt) {
+                evt.preventDefault();
+                L.download_xml(L.EC.current_data, 'layer.osm');
+            }).text('layer'),
+            '], [',
+            $('<a href="#" class="download button">').click(function(evt) {
+                evt.preventDefault();
+                L.download_xml(L.EC.diff(), 'diff.osc');
+            }).text('diff'),
+            ']'
+        ).appendTo(buttons_div);
+    });
+
+    edit_button.appendTo(buttons_div).click(function(evt) {
         evt.preventDefault();
-        L.EC = L.EditingContext(L.map);
         edit_button.hide();
-        L.EC.on('osm_loaded', function() {
-            $('<div>').append(
-                'upload to [',
-                $('<a href="#" class="download button">').click(function(evt) {
-                    evt.preventDefault();
-                    L.api_upload(L.EC.diff());
-                }).text('osm api'),
-                ']; download [',
-                $('<a href="#" class="download button">').click(function(evt) {
-                    evt.preventDefault();
-                    L.download_xml(L.EC.current_data, 'layer.osm');
-                }).text('layer'),
-                '], [',
-                $('<a href="#" class="download button">').click(function(evt) {
-                    evt.preventDefault();
-                    L.download_xml(L.EC.diff(), 'diff.osc');
-                }).text('diff'),
-                ']'
-            ).appendTo(menu_div);
-        });
+        L.EC.begin_selection();
+    });
+};
+
+
+L.load_templates = function() {
+    L.template = {};
+    $('script[type^="text/template"]').each(function() {
+        var name = $(this).attr('name');
+        var tmpl = _.template($(this).text());
+        function render(context) {
+            var full_context = _({template: L.template}).extend(context);
+            return tmpl(full_context);
+        }
+        L.template[name] = render;
+        $(this).remove();
     });
 };
 

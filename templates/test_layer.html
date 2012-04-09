@@ -1,0 +1,74 @@
+{% extends 'map_page.html' %}
+{% from 'bits.html' import link_less -%}
+
+{% block head_css %}
+  {{ link_less('test.less') }}
+{% endblock %}
+
+{% block body %}
+
+<div id="menu"></div>
+
+<script src='http://cdnjs.cloudflare.com/ajax/libs/prettify/188.0.0/prettify.js'></script>
+<div class="test-layer-xml"><pre class="prettyprint"></pre></div>
+
+<script>
+(function(L) {
+
+L.update_layer_xml = function() {
+    var layer_xml = L.layer_model.xml;
+    var layer_xml_str = L.serialize_xml(layer_xml);
+    $('.test-layer-xml pre').text(layer_xml_str);
+    prettyPrint();
+}
+
+L.main = function() {
+    L.initialize_map({lon: 26.097, lat: 44.435, zoom: 17});
+    L.layer_xml = L.parse_xml(L.template['layer-orig-xml']());
+    L.layer_model = new L.LayerModel({}, {xml: L.layer_xml});
+    L.layer_editor = new L.LayerEditor({model: L.layer_model, map: L.map});
+    L.layer_editor.$el.appendTo($('#menu'));
+    L.layer_model.on('change add remove', function() {
+        _.defer(L.update_layer_xml);
+    });
+    L.update_layer_xml();
+}
+
+$(document).ready(function() {
+    L.load_templates();
+    setTimeout(L.main, 200); // fix weird openlayers layout behaviour
+});
+
+})(window.L);
+</script>
+
+{% include 'edit_js_views.html' %}
+
+<script type="text/template+xml" name="layer-orig-xml">
+  <osm version="0.6" generator="Lawn 0.1.0">
+    <bounds minlat="44.4727148" minlon="26.0760455"
+            maxlat="44.4772852" maxlon="26.0879545"/>
+    <node lon="26.101137" lat="44.435011" id="550001" version="1">
+      <tag k="name" v="La Coada Calului"/>
+    </node>
+    <node lon="26.101426" lat="44.436290" id="550002" version="1">
+      <tag k="name" v="Fântână"/>
+    </node>
+    <node lon="26.101791" lat="44.433839" id="550003" version="1">
+      <tag k="name" v="Sf. Nicolae"/>
+      <tag k="amenity" v="place of worship"/>
+    </node>
+    <node lon="26.101909" lat="44.435394" id="330001" version="1"/>
+    <node lon="26.098208" lat="44.434842" id="330002" version="1"/>
+    <node lon="26.093906" lat="44.434674" id="330003" version="1"/>
+    <way id="99186328" version="1" changeset="7255441">
+     <nd ref="330001"/>
+     <nd ref="330002"/>
+     <nd ref="330003"/>
+     <tag k="highway" v="primary"/>
+     <tag k="oneway" v="yes"/>
+    </way>
+  </osm>
+</script>
+
+{% endblock %}

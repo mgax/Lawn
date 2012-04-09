@@ -1,3 +1,5 @@
+@import "lib/bootstrap-src/less/bootstrap.less";
+
 html,
 body,
 #map {
@@ -6,28 +8,22 @@ body,
     margin: 0;
 }
 
-#menu {
+.smoky-box {
     z-index: 1100;
     position: absolute;
-    top: 0;
-    right: 0;
-    padding: 5px;
-    background: rgba(255, 255, 255, 0.75);
-    border-left: 2px solid #888;
-    border-bottom: 2px solid #888;
-    border-bottom-left-radius: 5px;
+    background: rgba(245, 245, 245, 0.85);
+    box-shadow: 0px 0px 4px 2px #888;
 }
 
-.node-properties,
-.node-create {
-    z-index: 1100;
-    position: absolute;
-    top: 50px;
+#menu {
+    .smoky-box;
+    top: 0;
     right: 0;
-    padding: 5px;
-    background: rgba(255, 255, 255, 0.75);
-    border: 2px solid #888;
-    border-radius: 5px;
+    max-height: 100%;
+    min-width: 100px;
+    padding: 0 5px;
+    overflow: auto;
+    border-bottom-left-radius: 5px;
 }
 
 #message {

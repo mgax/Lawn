@@ -1,0 +1,40 @@
+{% extends 'map_page.html' %}
+
+{% block body %}
+
+<script>
+$(document).ready(function() {
+
+    L.load_templates();
+    setTimeout(L.initialize_map, 200); // fix weird openlayers layout behaviour
+
+    var root_xml = L.parse_xml(L.template['node1-xml']());
+    var node_xml = $('node', root_xml)[0];
+
+    L.node_model = new L.NodeModel({}, {xml: node_xml});
+    L.node_view = new L.NodeView({model: L.node_model});
+    L.node_view.$el.insertAfter($('#map'));
+
+    L.node_view.on('close', function() {
+        L.node_view.$el.remove();
+        console.log('delete node');
+    });
+
+});
+</script>
+
+{% include 'edit_js_views.html' %}
+
+<script type="text/template+xml" name="node1-xml">
+  <osm version="0.6" generator="CGImap 0.0.2">
+    <bounds minlat="44.4727148" minlon="26.0760455"
+            maxlat="44.4772852" maxlon="26.0879545"/>
+    <node id="982752568" lat="44.4757380" lon="25.9985050"
+          user="Romania CLC import bot" uid="358072" visible="true"
+          version="1" changeset="6322901" timestamp="2010-11-08T20:01:29Z">
+      <tag k="name" v="My favourite node"/>
+    </node>
+  </osm>
+</script>
+
+{% endblock %}
