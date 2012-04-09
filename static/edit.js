@@ -17,29 +17,73 @@ L.node_style_map = new OpenLayers.StyleMap({
     })
 });
 
+
+L.SelectArea = Backbone.View.extend({
+    events: {
+        'click .btn-download': 'select'
+    },
+
+    initialize: function(options) {
+        this.map = options['map'];
+        this.render();
+        this.layer = new OpenLayers.Layer.Vector('Edit', {});
+        this.map.addLayer(this.layer);
+
+        this.edit_control = new OpenLayers.Control.ModifyFeature(this.layer, {
+            vertexRenderIntent: 'temporary',
+            mode: OpenLayers.Control.ModifyFeature.RESIZE |
+                  OpenLayers.Control.ModifyFeature.RESHAPE |
+                  OpenLayers.Control.ModifyFeature.DRAG
+        });
+        this.map.addControl(this.edit_control);
+        this.edit_control.activate();
+
+        var bounds = this.map.calculateBounds().scale(0.5);
+        this.box = new OpenLayers.Feature.Vector(bounds.toGeometry());
+        this.layer.addFeatures([this.box]);
+        this.edit_control.selectControl.select(this.box);
+    },
+
+    cleanup: function() {
+        this.edit_control.deactivate();
+        this.map.removeControl(this.edit_control);
+        this.layer.removeFeatures([this.box]);
+        this.map.removeLayer(this.layer);
+    },
+
+    render: function() {
+        var btn = $('<a href="#" class="button btn-download">');
+        this.$el.empty().append(btn.text('download'));
+    },
+
+    select: function(evt) {
+        evt.preventDefault();
+        var bbox = L.invproj(this.box.geometry.bounds);
+        this.trigger('select', bbox);
+    }
+});
+
+
 L.EditingContext = function(map) {
     var self = {map: map};
 
     self.dispatch = L.Dispatch(self);
 
-    self.download_layer = new OpenLayers.Layer.Vector('Edit', {});
-    self.map.addLayer(self.download_layer);
-
-    self.edit_control = new OpenLayers.Control.ModifyFeature(self.download_layer, {
-        vertexRenderIntent: 'temporary',
-        mode: OpenLayers.Control.ModifyFeature.RESIZE |
-              OpenLayers.Control.ModifyFeature.RESHAPE |
-              OpenLayers.Control.ModifyFeature.DRAG
+    self.select_area = new L.SelectArea({map: self.map});
+    L.message("Select area then click ", self.select_area.el);
+    self.select_area.on('select', function(bbox) {
+        self.clear_download_ui();
+        var bbox_values = [bbox.left, bbox.bottom, bbox.right, bbox.top];
+        var bbox_arg = (bbox_values).map(L.quantize).join(',');
+        L.download(bbox_arg).done(function(data) {
+            self.edit_osm(data);
+        });
     });
-    self.map.addControl(self.edit_control);
-    self.edit_control.activate();
 
-    var bounds = self.map.calculateBounds().scale(0.5);
-    var box = new OpenLayers.Feature.Vector(bounds.toGeometry());
-    self.download_layer.addFeatures([box]);
-    self.edit_control.selectControl.select(box);
-
-    var download_button = $('<a href="#" class="button">').text('download');
+    self.clear_download_ui = function() {
+        L.hide_message();
+        self.select_area.cleanup();
+    };
 
     self.edit_osm = function(data) {
         self.original_data = $('osm', data)[0];
@@ -52,25 +96,6 @@ L.EditingContext = function(map) {
         self.model = new L.LayerModel({}, {xml: self.current_data});
         self.layer_editor = new L.LayerEditor({model: self.model, map: self.map});
     };
-
-    self.clear_download_ui = function() {
-        L.hide_message();
-        self.edit_control.deactivate();
-        self.map.removeControl(self.edit_control);
-        self.download_layer.removeFeatures([box]);
-        self.map.removeLayer(self.download_layer);
-    };
-
-    download_button.click(function(evt) {
-        evt.preventDefault();
-        self.clear_download_ui();
-        var b = L.invproj(box.geometry.bounds);
-        var bbox = b.left + ',' + b.bottom + ',' + b.right + ',' + b.top;
-        L.download(bbox).done(function(data) {
-            self.edit_osm(data);
-        });
-    });
-    L.message("Select area then click ", download_button);
 
     return self;
 };
