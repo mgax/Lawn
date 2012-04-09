@@ -64,54 +64,38 @@ L.EditingContext = function(map) {
             layer_vector: self.vector,
             generate_id: self.generate_id
         });
-        self.draw_node_control = self.node_create.draw_node_control;
         self.map.addControl(self.node_create.draw_node_control);
+        self.node_create.$el.insertAfter($('#menu'));
+
+        self.vector_edit = new L.VectorEdit({layer_vector: self.vector});
+        self.vector_edit.on('select', function(feature) {
+            self.node_create.hide();
+            var node_model = feature.L_vector.model;
+            self.node_view = new L.NodeView({model: node_model});
+            self.node_view.on('close', function() {
+                self.node_view.$el.remove();
+                self.node_view = null;
+                self.vector_edit.select_control.unselect(feature);
+            });
+            self.node_view.$el.insertAfter($('#menu'));
+        }, this);
+        self.vector_edit.on('deselect', function() {
+            if(self.node_view) self.node_view.close();
+            self.node_create.show();
+        }, this);
+
+        self.map.addControl(self.vector_edit.modify_control);
+        self.map.addControl(self.vector_edit.select_control);
+        self.vector_edit.activate();
+
+        self.node_create.on('begin_create_node', function() {
+            self.vector_edit.deactivate();
+        });
         self.node_create.on('create_node', function(node_model, node_feature) {
             self.model.nodes.add(node_model, {feature: node_feature});
-            self.select_control.activate();
-            self.modify_control.activate();
-            self.select_control.select(node_feature);
+            self.vector_edit.activate();
+            self.vector_edit.select_control.select(node_feature);
         });
-
-        self.node_create.$el.insertAfter($('#menu'));
-        self.node_create.on('begin_create_node', function() {
-            self.select_control.deactivate();
-            self.modify_control.deactivate();
-        });
-
-        self.modify_control = new OpenLayers.Control.ModifyFeature(
-            self.vector.node_layer,
-            {standalone: true});
-        self.map.addControl(self.modify_control);
-        self.modify_control.activate();
-
-        self.select_control = new OpenLayers.Control.SelectFeature(
-            self.vector.node_layer,
-            {
-                onSelect: self.modify_control.selectFeature,
-                onUnselect: self.modify_control.unselectFeature,
-                scope: self.modify_control
-            });
-        self.select_control.events.on({
-            'featurehighlighted': function(e) {
-                self.node_create.hide();
-                var feature = e.feature;
-                var node_model = feature.L_vector.model;
-                self.node_view = new L.NodeView({model: node_model});
-                self.node_view.on('close', function() {
-                    self.node_view.$el.remove();
-                    self.node_view = null;
-                    self.select_control.unselect(feature);
-                });
-                self.node_view.$el.insertAfter($('#menu'));
-            },
-            'featureunhighlighted': function(e) {
-                if(self.node_view) self.node_view.close();
-                self.node_create.show();
-            }
-        });
-        self.map.addControl(self.select_control);
-        self.select_control.activate();
     };
 
     self.clear_download_ui = function() {
@@ -465,6 +449,42 @@ L.NodeCreate = Backbone.View.extend({
         var node_model = new L.NodeModel({}, {xml: node_xml});
         this.draw_node_control.deactivate();
         this.trigger('create_node', node_model, node_feature);
+    }
+});
+
+
+L.VectorEdit = Backbone.View.extend({
+    initialize: function(options) {
+        this.layer_vector = options['layer_vector'];
+        this.modify_control = new OpenLayers.Control.ModifyFeature(
+            this.layer_vector.node_layer,
+            {standalone: true});
+        this.select_control = new OpenLayers.Control.SelectFeature(
+            this.layer_vector.node_layer,
+            {
+                'onSelect': this.modify_control.selectFeature,
+                'onUnselect': this.modify_control.unselectFeature,
+                scope: this.modify_control
+            });
+        this.select_control.events.on({
+            'featurehighlighted': function(e) {
+                this.trigger('select', e.feature);
+            },
+            'featureunhighlighted': function(e) {
+                this.trigger('deselect');
+            },
+            scope: this
+        });
+    },
+
+    activate: function() {
+        this.select_control.activate();
+        this.modify_control.activate();
+    },
+
+    deactivate: function() {
+        this.select_control.deactivate();
+        this.modify_control.deactivate();
     }
 });
 
