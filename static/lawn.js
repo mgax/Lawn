@@ -97,7 +97,9 @@ L.initialize_map = function(options) {
         zoom: 13
     }).extend(options);
     L.map = new OpenLayers.Map('map');
-    L.map.addLayer(new OpenLayers.Layer.OSM("OpenStreetMap"));
+    var osm_layer = new OpenLayers.Layer.OSM("OpenStreetMap");
+    L.map.addLayer(osm_layer);
+    L.grayscale(osm_layer);
     var center = new OpenLayers.LonLat(options['lon'], options['lat']);
     L.map.setCenter(L.proj(center), options['zoom']);
 };
@@ -151,6 +153,26 @@ L.load_templates = function() {
         }
         L.template[name] = render;
         $(this).remove();
+    });
+};
+
+
+L.grayscale = function(layer) {
+    if (!OpenLayers.CANVAS_SUPPORTED) { return; }
+
+    layer.events.register('tileloaded', null, function(evt) {
+        var ctx = evt.tile.getCanvasContext();
+        if (ctx) {
+            var imgd = ctx.getImageData(0, 0, evt.tile.size.w, evt.tile.size.h);
+            var pix = imgd.data;
+            for (var i = 0, n = pix.length; i < n; i += 4) {
+                var v = (3 * pix[i] + 4 * pix[i + 1] + pix[i + 2]) / 8;
+                pix[i] = pix[i + 1] = pix[i + 2] = v;
+            }
+            ctx.putImageData(imgd, 0, 0);
+            evt.tile.imgDiv.removeAttribute("crossorigin");
+            evt.tile.imgDiv.src = ctx.canvas.toDataURL();
+        }
     });
 };
 
