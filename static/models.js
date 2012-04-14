@@ -32,6 +32,18 @@ L.NodeModel = Backbone.Model.extend({
         this.set({tags: new_tags});
     },
 
+    make_tag_collection: function() {
+        var tag_collection = new Backbone.Collection;
+        _(this.get('tags')).forEach(function(tag_data) {
+            tag_collection.add(new Backbone.Model(tag_data));
+        });
+        return tag_collection;
+    },
+
+    save_tag_collection: function(tag_collection) {
+        this.update_tags(tag_collection.toJSON());
+    },
+
     update_position: function(new_position) {
         this.$xml.attr(new_position);
         this.set(new_position);

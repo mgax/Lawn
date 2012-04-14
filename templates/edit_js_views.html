@@ -5,12 +5,14 @@
     <div>lat: <span class="node-lat"><%= lat %></span></div>
     <div>lat: <span class="node-lon"><%= lon %></span></div>
   </div>
+  <div class="node-tags-placeholder"></div>
+  <div>[<a href="#" class="delete button">delete node</a>]</div>
 </script>
 
 <script type="text/template+html" name="tag-tr">
-  <tr class="tag">
-    <td><input name="key" value="<%= key %>"></td>
-    <td><input name="value" value="<%= value %>"></td>
+  <tr class="tag" data-cid="<%= model.cid %>">
+    <td><input name="key" value="<%= model.get('key') %>"></td>
+    <td><input name="value" value="<%= model.get('value') %>"></td>
   </tr>
 </script>
 
@@ -23,15 +25,12 @@
       </tr>
     </thead>
     <tbody>
-      <% _(tags).forEach(function(tag) { %>
-        <%= template['tag-tr'](tag) %>
+      <% tag_collection.forEach(function(tag_model) { %>
+        <%= template['tag-tr']({model: tag_model}) %>
       <% }); %>
     </tbody>
   </table>
-  <div>
-      [<a href="#" class="new button">new tag</a>]
-      [<a href="#" class="delete button">delete node</a>]
-  </div>
+  <div>[<a href="#" class="new button">new tag</a>]</div>
 </script>
 
 <script type="text/template+html" name="node-create">
