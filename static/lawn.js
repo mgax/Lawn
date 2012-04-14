@@ -46,6 +46,14 @@ L.hide_message = function() {
     $('#message').removeClass('visible');
 };
 
+L.xml_node = function(tag_name, attributes) {
+    var xml = $.parseXML('<' + tag_name + '/>').firstChild;
+    if(attributes) {
+        $(xml).attr(attributes);
+    }
+    return xml;
+};
+
 L.parse_xml = function(xml_src) {
     var root_node = $.parseXML(xml_src.replace(/>\s+</g, '><')).firstChild;
     $('*', root_node).each(function(i, node) {
