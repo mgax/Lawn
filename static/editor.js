@@ -34,21 +34,30 @@ L.NodeVector = Backbone.View.extend({
 
     initialize: function(options) {
         this.layer_vector = options['layer_vector'];
-        var geometry = L.proj(L.geometry_for_node(this.model));
+        this.geometry = L.proj(L.geometry_for_node(this.model));
         this.feature = options['feature'];
         if(! this.feature) {
-            this.feature = new OpenLayers.Feature.Vector(geometry);
+            this.feature = new OpenLayers.Feature.Vector(this.geometry);
         }
         this.feature.L_vector = this;
-        this.on('vertexmodified', this.update_position, this);
+        this.on('vertexmodified', this.save_position, this);
+        this.model.on('change', this.redraw_position_if_changed, this);
     },
 
-    update_position: function() {
-        var new_position = L.invproj(this.feature.geometry.clone());
-        this.model.update_position({
-            'lon': L.quantize(new_position.x),
-            'lat': L.quantize(new_position.y)
-        });
+    save_position: function() {
+        var new_position = L.invproj(this.geometry.clone());
+        var values = {'lon': new_position.x, 'lat': new_position.y};
+        this.model.update_position(values, {'from_vector_edit': true});
+    },
+
+    redraw_position_if_changed: function(node, options) {
+        if(options['from_vector_edit']) { return; }
+        if(!(options['changes']['lat'] ||
+             options['changes']['lon'])) {
+            return;
+        }
+        L.update_point(this.geometry, L.proj(L.geometry_for_node(this.model)));
+        this.trigger('geometry_change', this);
     }
 
 });
@@ -116,15 +125,15 @@ L.WayVector = Backbone.View.extend({
             var node = this.geometry_id_to_node[point.id];
 
             if(node) {
-                node.update_position({ // TODO quantize in the model
-                    'lon': L.quantize(coords.x),
-                    'lat': L.quantize(coords.y)
+                node.update_position({
+                    'lon': coords.x,
+                    'lat': coords.y
                 });
             }
             else {
                 var node = this.layer_vector.model.create_node({
-                    lon: coords.x,
-                    lat: coords.y
+                    'lon': coords.x,
+                    'lat': coords.y
                 });
                 this.model.nodes.add(node, {
                     'at': point_idx,
@@ -171,6 +180,7 @@ L.LayerVector = Backbone.View.extend({
         });
         this.node_vectors[node_model.id] = node_vector;
         this.node_layer.addFeatures([node_vector.feature]);
+        node_vector.on('geometry_change', this.geometry_change, this);
     },
 
     remove_node: function(node_model) {
@@ -188,9 +198,10 @@ L.LayerVector = Backbone.View.extend({
         way_vector.on('geometry_change', this.geometry_change, this);
     },
 
-    geometry_change: function(way_vector) {
-        if(way_vector.feature) {
-            this.way_layer.drawFeature(way_vector.feature);
+    geometry_change: function(vector_view) {
+        if(vector_view.feature) {
+            var feature = vector_view.feature;
+            feature.layer.drawFeature(feature);
         }
     }
 });

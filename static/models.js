@@ -55,9 +55,13 @@ L.NodeModel = Backbone.Model.extend({
         return new L.ElementTagCollection(null, {element: this});
     },
 
-    update_position: function(new_position) {
+    update_position: function(values, options) {
+        var new_position = {
+            'lon': L.quantize(values['lon']),
+            'lat': L.quantize(values['lat'])
+        };
         this.$xml.attr(new_position);
-        this.set(new_position);
+        this.set(new_position, options);
     },
 
     destroy: function() {
