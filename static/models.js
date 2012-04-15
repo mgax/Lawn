@@ -102,9 +102,11 @@ L.WayModel = Backbone.Model.extend({
 
 
 L.LayerModel = Backbone.Model.extend({
+
     initialize: function(attributes, options) {
         this.xml = options['xml'];
         this.$xml = $(this.xml);
+        this._last_generated_id = 0;
 
         this.nodes = new Backbone.Collection(
             _(this.$xml.find('> node')).map(function(node_xml) {
@@ -132,7 +134,26 @@ L.LayerModel = Backbone.Model.extend({
         }
         this.nodes.on('all', propagate_events, this);
         this.ways.on('all', propagate_events, this);
+    },
+
+    create_node: function(options) {
+        var node_xml = L.xml_node('node');
+        $(node_xml).attr({
+            lon: L.quantize(options.lon),
+            lat: L.quantize(options.lat),
+            id: this.generate_id(),
+            version: 1
+        });
+        var node = new L.NodeModel({}, {xml: node_xml});
+        this.nodes.add(node, options);
+        return node;
+    },
+
+    generate_id: function() {
+        this._last_generated_id -= 1;
+        return this._last_generated_id;
     }
+
 });
 
 

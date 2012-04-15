@@ -305,7 +305,7 @@ L.NodeCreate = Backbone.View.extend({
     },
 
     render: function() {
-        this.$el.html(L.template[this.templateName]({model: this.model}));
+        this.$el.html(L.template[this.templateName]());
     },
 
     buttonClick: function(evt) {
@@ -329,16 +329,13 @@ L.NodeCreate = Backbone.View.extend({
     feature_added: function(evt) {
         var node_feature = evt.feature;
         var coords = L.invproj(node_feature.geometry.clone());
-        var node_xml = L.xml_node('node');
-        $(node_xml).attr({
-            lon: L.quantize(coords.x),
-            lat: L.quantize(coords.y),
-            id: this.generate_id(),
-            version: 1
+        this.model.create_node({
+            lon: coords.x,
+            lat: coords.y,
+            feature: node_feature
         });
-        var node_model = new L.NodeModel({}, {xml: node_xml});
         this.draw_node_control.deactivate();
-        this.trigger('create_node', node_model, node_feature);
+        this.trigger('create_node', {feature: node_feature});
     }
 });
 
@@ -394,10 +391,9 @@ L.LayerEditor = Backbone.View.extend({
         this.vector.node_layer.styleMap = L.node_style_map;
         this.map.addLayers([this.vector.node_layer, this.vector.way_layer]);
 
-        this._last_generated_id = 0;
         this.node_create = new L.NodeCreate({
-            layer_vector: this.vector,
-            generate_id: _.bind(this.generate_id, this) // TODO generate_id
+            model: this.model,
+            layer_vector: this.vector
         });
         this.map.addControl(this.node_create.draw_node_control);
         this.node_create.$el.appendTo(this.el);
@@ -429,17 +425,12 @@ L.LayerEditor = Backbone.View.extend({
         this.node_create.on('begin_create_node', function() {
             this.vector_edit.deactivate();
         }, this);
-        this.node_create.on('create_node', function(node_model, node_feature) {
-            this.model.nodes.add(node_model, {feature: node_feature});
+        this.node_create.on('create_node', function(options) {
             this.vector_edit.activate();
-            this.vector_edit.select_control.select(node_feature);
+            this.vector_edit.select_control.select(options['feature']);
         }, this);
-    },
-
-    generate_id: function() {
-        this._last_generated_id -= 1;
-        return this._last_generated_id;
     }
+
 });
 
 
