@@ -13,6 +13,16 @@ _.mixin({
     }
 });
 
+
+L.Base = function(options) {
+    this.initialize.apply(this, arguments);
+};
+_.extend(L.Base.prototype, Backbone.Events, {
+    initialize: function() {}
+});
+L.Base.extend = Backbone.Model.extend;
+
+
 L.wgs84 = new OpenLayers.Projection("EPSG:4326");
 L.map_proj = new OpenLayers.Projection("EPSG:900913");
 

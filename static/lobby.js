@@ -55,11 +55,7 @@ L.SelectArea = Backbone.View.extend({
 });
 
 
-L.EditingContext = function(options) {
-    this.initialize.apply(this, arguments);
-}
-
-_.extend(L.EditingContext.prototype, Backbone.Events, {
+L.EditingContext = L.Base.extend({
 
     initialize: function(options) {
         this.map = options['map'];
