@@ -138,57 +138,78 @@ L.LayerVector = Backbone.View.extend({
 });
 
 
+L.TagView = Backbone.View.extend({
+
+    events: {
+        'click .new.button': 'new_tag',
+        'change tr.tag': 'tag_change'
+    },
+
+    initialize: function() {
+        this.render();
+    },
+
+    render: function() {
+        this.$el.html(L.template['tags-table']({tag_collection: this.model}));
+    },
+
+    new_tag: function(evt) {
+        evt.preventDefault();
+        var new_tag = new Backbone.Model({'key': "", 'value': ""})
+        this.model.add(new_tag);
+        var tag_html = L.template['tag-tr']({model: new_tag});
+        $('table.node-tags', this.el).append(tag_html);
+    },
+
+    save_tag: function(tr) {
+        var $tr = $(tr);
+        var tag_model = this.model.getByCid($tr.data('cid'));
+        var key = $tr.find('input[name=key]').val();
+        var value = $tr.find('input[name=value]').val();
+        if(key) {
+            tag_model.set({'key': key, 'value': value});
+        }
+        else {
+            this.model.remove(tag_model);
+            $tr.remove();
+        }
+    },
+
+    tag_change: function(evt) {
+        this.save_tag($(evt.target).parents('tr.tag')[0]);
+    },
+
+    save_to_model: function() {
+        _(this.$el.find('tr.tag')).forEach(function(tr) {
+            this.save_tag(tr);
+        }, this);
+    }
+
+});
+
+
 L.NodeView = Backbone.View.extend({
 
     className: 'node-properties',
 
     events: {
         'click .close.button': 'close',
-        'click .new.button': 'new_tag',
         'click .delete.button': 'delete'
     },
 
     initialize: function() {
+        this.tags = new L.TagView({
+            model: this.model.make_tag_collection()
+        });
         this.render();
         this.model.on('change', this.render, this);
     },
 
     render: function() {
-        $('.node-view-info', this.el).remove();
-        var template = L.template['node-view-info'];
         var tmpl_data = _({id: this.model.id}).extend(this.model.attributes);
-        this.$el.prepend(template(tmpl_data));
-        if($('table.node-tags', this.el).length < 1) {
-            this.render_table();
-        }
-    },
-
-    render_table: function() {
-        var tags_data = _($('> tag', this.model.xml)).map(function(tag_xml) {
-            return {
-                'key': $(tag_xml).attr('k'),
-                'value': $(tag_xml).attr('v')
-            };
-        });
-        this.$el.append(L.template['tags-table']({'tags': tags_data}));
-    },
-
-    new_tag: function(evt) {
-        evt.preventDefault();
-        var tag_html = L.template['tag-tr']({'key': "", 'value': ""});
-        $('table.node-tags', this.el).append(tag_html);
-    },
-
-    save: function() {
-        var new_tags = [];
-        _(this.$el.find('tr.tag')).forEach(function(tr) {
-            var key = $(tr).find('input[name=key]').val();
-            var value = $(tr).find('input[name=value]').val();
-            if(key && value) {
-                new_tags.push({'key': key, 'value': value});
-            }
-        }, this);
-        this.model.update_tags(new_tags);
+        this.$el.html(L.template['node-view-info'](tmpl_data));
+        this.$el.find('div.node-tags-placeholder').replaceWith(this.tags.$el);
+        this.tags.delegateEvents();
     },
 
     delete: function(evt) {
@@ -199,7 +220,7 @@ L.NodeView = Backbone.View.extend({
 
     close: function(evt) {
         if(evt) { evt.preventDefault(); }
-        this.save();
+        this.tags.save_to_model();
         this.trigger('close');
     }
 

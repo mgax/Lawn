@@ -1,6 +1,34 @@
 (function(L) {
 
 
+L.ElementTagCollection = Backbone.Collection.extend({
+
+    initialize: function(models, options) {
+        this.element = options['element'];
+        _(this.element.get('tags')).forEach(function(tag_data) {
+            this.add(new Backbone.Model(tag_data));
+        }, this);
+        this.on('change add remove', this.save, this);
+    },
+
+    save: function() {
+        var element = this.element;
+        var new_tags = this.toJSON();
+
+        if(_(new_tags).isEqual(element.get('tags'))) {
+            return; }
+        element.$xml.find('> tag').remove();
+        _(new_tags).forEach(function(tag) {
+            var attr = {k: tag['key'], v: tag['value']};
+            var tag_xml = $(L.xml_node('tag', attr));
+            element.$xml.append(tag_xml);
+        });
+        element.set({tags: new_tags});
+    }
+
+});
+
+
 L.NodeModel = Backbone.Model.extend({
     initialize: function(attributes, options) {
         this.xml = options['xml'];
@@ -20,16 +48,8 @@ L.NodeModel = Backbone.Model.extend({
         this.ways = new Backbone.Collection;
     },
 
-    update_tags: function(new_tags) {
-        if(_(new_tags).isEqual(this.get('tags'))) {
-            return; }
-        this.$xml.find('> tag').remove();
-        _(new_tags).forEach(function(tag) {
-            var attr = {k: tag['key'], v: tag['value']};
-            var tag_xml = $(L.xml_node('tag', attr));
-            this.$xml.append(tag_xml);
-        }, this);
-        this.set({tags: new_tags});
+    make_tag_collection: function() {
+        return new L.ElementTagCollection(null, {element: this});
     },
 
     update_position: function(new_position) {
