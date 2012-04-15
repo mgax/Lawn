@@ -17,7 +17,7 @@ L.node_style_map = new OpenLayers.StyleMap({
     })
 });
 
-L.node_point = function(node_model) {
+L.geometry_for_node = function(node_model) {
     return new OpenLayers.Geometry.Point(
         node_model.get('lon'),
         node_model.get('lat'));
@@ -33,7 +33,7 @@ L.update_point = function(point, new_data) {
 L.NodeVector = Backbone.View.extend({
     initialize: function(options) {
         this.layer_vector = options['layer_vector'];
-        var geometry = L.proj(L.node_point(this.model));
+        var geometry = L.proj(L.geometry_for_node(this.model));
         this.feature = options['feature'];
         if(! this.feature) {
             this.feature = new OpenLayers.Feature.Vector(geometry);
@@ -41,7 +41,7 @@ L.NodeVector = Backbone.View.extend({
         this.feature.L_vector = this;
     },
 
-    vector_moved: function() {
+    feature_modified: function() {
         var new_position = L.invproj(this.feature.geometry.clone());
         this.model.update_position({
             'lon': L.quantize(new_position.x),
@@ -54,12 +54,14 @@ L.NodeVector = Backbone.View.extend({
 L.WayVector = Backbone.View.extend({
     initialize: function(options) {
         this.layer_vector = options['layer_vector'];
-        this.node_point = {};
+        this.node_id_to_geometry = {};
+        this.geometry_id_to_node = {};
         var line_string = new OpenLayers.Geometry.LineString();
         this.model.nodes.forEach(function(node_model) {
-            var point_geometry = L.proj(L.node_point(node_model));
+            var point_geometry = L.proj(L.geometry_for_node(node_model));
             line_string.addComponent(point_geometry);
-            this.node_point[node_model.id] = point_geometry;
+            this.node_id_to_geometry[node_model.id] = point_geometry;
+            this.geometry_id_to_node[point_geometry.id] = node_model;
         }, this);
         this.feature = new OpenLayers.Feature.Vector(line_string);
         this.feature.L_vector = this;
@@ -68,7 +70,8 @@ L.WayVector = Backbone.View.extend({
     },
 
     remove_node: function(node_model) {
-        var point = _(this.node_point).pop(node_model.id);
+        var point = _(this.node_id_to_geometry).pop(node_model.id);
+        _(this.geometry_id_to_node).pop(point.id);
         this.feature.geometry.removeComponent(point);
         this.trigger('geometry_change', this);
     },
@@ -78,10 +81,25 @@ L.WayVector = Backbone.View.extend({
              options['changes']['lon'])) {
             return;
         }
-        L.update_point(this.node_point[node_model.id],
-                       L.proj(L.node_point(node_model)));
+        L.update_point(this.node_id_to_geometry[node_model.id],
+                       L.proj(L.geometry_for_node(node_model)));
         this.trigger('geometry_change', this);
+    },
+
+    feature_modified: function() {
+        this.update_node_list();
+    },
+
+    update_node_list: function() {
+        var point_list = this.feature.geometry.components;
+        var node_list = _(point_list).map(function(point) {
+            var node = this.geometry_id_to_node[point.id];
+            if(! node) {
+                console.log('new point', point.id);
+            }
+        }, this);
     }
+
 });
 
 
@@ -95,9 +113,7 @@ L.LayerVector = Backbone.View.extend({
 
         this.node_layer.events.on({
             'featuremodified': function(evt) {
-                var feature = evt.feature;
-                var node_vector = feature.L_vector;
-                node_vector.vector_moved();
+                evt.feature.L_vector.feature_modified();
             }
         });
 
