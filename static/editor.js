@@ -109,12 +109,19 @@ L.WayVector = Backbone.View.extend({
 
     update_node_list: function() {
         var point_list = this.feature.geometry.components;
-        var node_list = _(point_list).map(function(point) {
-            var node = this.geometry_id_to_node[point.id];
-            if(! node) {
-                var point_idx = _(point.parent.components).indexOf(point);
+        _(point_list).map(function(point) {
 
-                var coords = L.invproj(point.clone());
+            var point_idx = _(point.parent.components).indexOf(point);
+            var coords = L.invproj(point.clone());
+            var node = this.geometry_id_to_node[point.id];
+
+            if(node) {
+                node.update_position({ // TODO quantize in the model
+                    'lon': L.quantize(coords.x),
+                    'lat': L.quantize(coords.y)
+                });
+            }
+            else {
                 var node = this.layer_vector.model.create_node({
                     lon: coords.x,
                     lat: coords.y
@@ -124,6 +131,7 @@ L.WayVector = Backbone.View.extend({
                     'inserted_by_modify_feature': true
                 });
             }
+
         }, this);
     }
 
