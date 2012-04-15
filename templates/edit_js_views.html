@@ -47,3 +47,14 @@
       [<a href="#" class="new button">create node</a>]
   </div>
 </script>
+
+<script type="text/template+html" name="editing-context">
+  <% if(state == 'initial') { %>
+    <a href="#" class="edit button">edit</a>
+  <% } %>
+  <% if(state == 'edit') { %>
+    upload to [<a href="#" class="upload_to_osm button">osm api</a>];
+    download [<a href="#" class="download_layer button">layer</a>],
+    [<a href="#" class="download_diff button">diff</a>]
+  <% } %>
+</script>

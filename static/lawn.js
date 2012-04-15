@@ -125,38 +125,8 @@ L.initialize_map = function(options) {
 
 L.main = function() {
     L.initialize_map();
-    var buttons_div = $('<div class="editing_context-actions">');
-    buttons_div.appendTo($('#menu'));
-    var edit_button = $('<a href="#" class="button">').text('edit');
-
-    L.EC = new L.EditingContext({map: L.map});
-
-    L.EC.on('osm_loaded', function() {
-        $('<div>').append(
-            'upload to [',
-            $('<a href="#" class="download button">').click(function(evt) {
-                evt.preventDefault();
-                L.api_upload(L.EC.diff());
-            }).text('osm api'),
-            ']; download [',
-            $('<a href="#" class="download button">').click(function(evt) {
-                evt.preventDefault();
-                L.download_xml(L.EC.current_data, 'layer.osm');
-            }).text('layer'),
-            '], [',
-            $('<a href="#" class="download button">').click(function(evt) {
-                evt.preventDefault();
-                L.download_xml(L.EC.diff(), 'diff.osc');
-            }).text('diff'),
-            ']'
-        ).appendTo(buttons_div);
-    });
-
-    edit_button.appendTo(buttons_div).click(function(evt) {
-        evt.preventDefault();
-        edit_button.hide();
-        L.EC.begin_selection();
-    });
+    L.ec = new L.EditingContext({map: L.map});
+    $('.menu').append(L.ec.el);
 };
 
 
