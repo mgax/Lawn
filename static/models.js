@@ -89,6 +89,12 @@ L.WayModel = Backbone.Model.extend({
                 node.ways.add(this);
                 return node;
             }, this));
+        this.nodes.on('add', function(node, collection, options) {
+            var nd = L.xml_node('nd', {ref: node.id});
+            var idx = options['index'];
+            var next_nd = this.$xml.find('> nd')[idx];
+            $(nd).insertBefore(next_nd);
+        }, this);
         this.nodes.on('destroy', function(node) {
             this.$xml.find('> nd[ref="' + node.id + '"]').remove();
         }, this);

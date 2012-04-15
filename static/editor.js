@@ -55,23 +55,39 @@ L.NodeVector = Backbone.View.extend({
 
 
 L.WayVector = Backbone.View.extend({
+
     initialize: function(options) {
         this.layer_vector = options['layer_vector'];
+
         this.node_id_to_geometry = {};
         this.geometry_id_to_node = {};
-        var line_string = new OpenLayers.Geometry.LineString();
-        this.model.nodes.forEach(function(node_model) {
-            var point_geometry = L.proj(L.geometry_for_node(node_model));
-            line_string.addComponent(point_geometry);
-            this.node_id_to_geometry[node_model.id] = point_geometry;
-            this.geometry_id_to_node[point_geometry.id] = node_model;
-        }, this);
-        this.feature = new OpenLayers.Feature.Vector(line_string);
-        this.feature.L_vector = this;
+        this.line_string = new OpenLayers.Geometry.LineString();
+
+        this.model.nodes.forEach(this.add_node, this);
+        this.model.nodes.on('add', this.add_node, this);
         this.model.nodes.on('remove', this.remove_node, this);
         this.model.nodes.on('change', this.node_change, this);
+
         this.on('featuremodified', this.update_node_list, this);
-        this.on('vertexmodified', this.update_node_position, this);
+
+        this.feature = new OpenLayers.Feature.Vector(this.line_string);
+        this.feature.L_vector = this;
+    },
+
+    add_node: function(node_model, collection, options) {
+        var point_geometry = L.proj(L.geometry_for_node(node_model));
+        if(options && options['inserted_by_modify_feature']) {
+            var idx = options ? options['index'] : null;
+            var tmp_component = this.line_string.components[idx];
+            this.line_string.removeComponent(tmp_component);
+            this.line_string.addComponent(point_geometry, idx);
+        }
+        else {
+            this.line_string.addComponent(point_geometry);
+        }
+        this.node_id_to_geometry[node_model.id] = point_geometry;
+        this.geometry_id_to_node[point_geometry.id] = node_model;
+        this.trigger('geometry_change', this);
     },
 
     remove_node: function(node_model) {
@@ -91,22 +107,22 @@ L.WayVector = Backbone.View.extend({
         this.trigger('geometry_change', this);
     },
 
-    update_node_position: function(vertex) {
-        var node_idx = _(vertex.parent.components).indexOf(vertex);
-        var node = this.model.nodes.at(node_idx);
-        var new_position = L.invproj(vertex.clone());
-        node.update_position({
-            'lon': L.quantize(new_position.x),
-            'lat': L.quantize(new_position.y)
-        });
-    },
-
     update_node_list: function() {
         var point_list = this.feature.geometry.components;
         var node_list = _(point_list).map(function(point) {
             var node = this.geometry_id_to_node[point.id];
             if(! node) {
-                console.log('new point', point.id);
+                var point_idx = _(point.parent.components).indexOf(point);
+
+                var coords = L.invproj(point.clone());
+                var node = this.layer_vector.model.create_node({
+                    lon: coords.x,
+                    lat: coords.y
+                });
+                this.model.nodes.add(node, {
+                    'at': point_idx,
+                    'inserted_by_modify_feature': true
+                });
             }
         }, this);
     }
@@ -165,7 +181,9 @@ L.LayerVector = Backbone.View.extend({
     },
 
     geometry_change: function(way_vector) {
-        this.way_layer.drawFeature(way_vector.feature);
+        if(way_vector.feature) {
+            this.way_layer.drawFeature(way_vector.feature);
+        }
     }
 });
 
