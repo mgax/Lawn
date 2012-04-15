@@ -141,7 +141,8 @@ L.LayerVector = Backbone.View.extend({
 L.TagView = Backbone.View.extend({
 
     events: {
-        'click .new.button': 'new_tag'
+        'click .new.button': 'new_tag',
+        'change tr.tag': 'tag_change'
     },
 
     initialize: function() {
@@ -160,17 +161,27 @@ L.TagView = Backbone.View.extend({
         $('table.node-tags', this.el).append(tag_html);
     },
 
+    save_tag: function(tr) {
+        var $tr = $(tr);
+        var tag_model = this.model.getByCid($tr.data('cid'));
+        var key = $tr.find('input[name=key]').val();
+        var value = $tr.find('input[name=value]').val();
+        if(key) {
+            tag_model.set({'key': key, 'value': value});
+        }
+        else {
+            this.model.remove(tag_model);
+            $tr.remove();
+        }
+    },
+
+    tag_change: function(evt) {
+        this.save_tag($(evt.target).parents('tr.tag')[0]);
+    },
+
     save_to_model: function() {
         _(this.$el.find('tr.tag')).forEach(function(tr) {
-            var tag_model = this.model.getByCid($(tr).data('cid'));
-            var key = $(tr).find('input[name=key]').val();
-            var value = $(tr).find('input[name=value]').val();
-            if(key && value) {
-                tag_model.set({'key': key, 'value': value});
-            }
-            else {
-                this.model.remove(tag_model);
-            }
+            this.save_tag(tr);
         }, this);
     }
 
@@ -201,11 +212,6 @@ L.NodeView = Backbone.View.extend({
         this.tags.delegateEvents();
     },
 
-    save: function() {
-        this.tags.save_to_model();
-        this.model.save_tag_collection(this.tags.model);
-    },
-
     delete: function(evt) {
         evt.preventDefault();
         this.close()
@@ -214,7 +220,7 @@ L.NodeView = Backbone.View.extend({
 
     close: function(evt) {
         if(evt) { evt.preventDefault(); }
-        this.save();
+        this.tags.save_to_model();
         this.trigger('close');
     }
 
