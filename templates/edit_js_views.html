@@ -9,6 +9,14 @@
   <div>[<a href="#" class="delete button">delete node</a>]</div>
 </script>
 
+<script type="text/template+html" name="way-view-info">
+  <div class="way-view-info">
+    <div class="button-box">[<a href="#" class="close button">x</a>]</div>
+    <div>way <%= id %></div>
+  </div>
+  <div class="way-tags-placeholder"></div>
+</script>
+
 <script type="text/template+html" name="tag-tr">
   <tr class="tag" data-cid="<%= model.cid %>">
     <td><input name="key" value="<%= model.get('key') %>"></td>

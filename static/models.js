@@ -30,6 +30,9 @@ L.ElementTagCollection = Backbone.Collection.extend({
 
 
 L.NodeModel = Backbone.Model.extend({
+
+    type: 'node',
+
     initialize: function(attributes, options) {
         this.xml = options['xml'];
         this.$xml = $(this.xml);
@@ -52,21 +55,36 @@ L.NodeModel = Backbone.Model.extend({
         return new L.ElementTagCollection(null, {element: this});
     },
 
-    update_position: function(new_position) {
+    update_position: function(values, options) {
+        var new_position = {
+            'lon': L.quantize(values['lon']),
+            'lat': L.quantize(values['lat'])
+        };
         this.$xml.attr(new_position);
-        this.set(new_position);
+        this.set(new_position, options);
     },
 
     destroy: function() {
         this.trigger('destroy', this);
     }
+
 });
 
 
 L.WayModel = Backbone.Model.extend({
+
+    type: 'way',
+
     initialize: function(attributes, options) {
         this.xml = options['xml'];
         this.$xml = $(this.xml);
+        var tags = _(this.$xml.find('> tag')).map(function(tag_xml) {
+            return {
+                key: $(tag_xml).attr('k'),
+                value: $(tag_xml).attr('v')
+            }
+        });
+        this.set('tags', tags);
         this.id = this.$xml.attr('id');
         this.nodes = new Backbone.Collection(
             _(this.$xml.find('> nd')).map(function(nd_xml) {
@@ -75,17 +93,30 @@ L.WayModel = Backbone.Model.extend({
                 node.ways.add(this);
                 return node;
             }, this));
+        this.nodes.on('add', function(node, collection, options) {
+            var nd = L.xml_node('nd', {ref: node.id});
+            var idx = options['index'];
+            var next_nd = this.$xml.find('> nd')[idx];
+            $(nd).insertBefore(next_nd);
+        }, this);
         this.nodes.on('destroy', function(node) {
             this.$xml.find('> nd[ref="' + node.id + '"]').remove();
         }, this);
+    },
+
+    make_tag_collection: function() {
+        return new L.ElementTagCollection(null, {element: this});
     }
+
 });
 
 
 L.LayerModel = Backbone.Model.extend({
+
     initialize: function(attributes, options) {
         this.xml = options['xml'];
         this.$xml = $(this.xml);
+        this._last_generated_id = 0;
 
         this.nodes = new Backbone.Collection(
             _(this.$xml.find('> node')).map(function(node_xml) {
@@ -113,7 +144,26 @@ L.LayerModel = Backbone.Model.extend({
         }
         this.nodes.on('all', propagate_events, this);
         this.ways.on('all', propagate_events, this);
+    },
+
+    create_node: function(options) {
+        var node_xml = L.xml_node('node');
+        $(node_xml).attr({
+            lon: L.quantize(options.lon),
+            lat: L.quantize(options.lat),
+            id: this.generate_id(),
+            version: 1
+        });
+        var node = new L.NodeModel({}, {xml: node_xml});
+        this.nodes.add(node, options);
+        return node;
+    },
+
+    generate_id: function() {
+        this._last_generated_id -= 1;
+        return this._last_generated_id;
     }
+
 });
 
 
