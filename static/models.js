@@ -74,6 +74,13 @@ L.WayModel = Backbone.Model.extend({
     initialize: function(attributes, options) {
         this.xml = options['xml'];
         this.$xml = $(this.xml);
+        var tags = _(this.$xml.find('> tag')).map(function(tag_xml) {
+            return {
+                key: $(tag_xml).attr('k'),
+                value: $(tag_xml).attr('v')
+            }
+        });
+        this.set('tags', tags);
         this.id = this.$xml.attr('id');
         this.nodes = new Backbone.Collection(
             _(this.$xml.find('> nd')).map(function(nd_xml) {
@@ -85,6 +92,10 @@ L.WayModel = Backbone.Model.extend({
         this.nodes.on('destroy', function(node) {
             this.$xml.find('> nd[ref="' + node.id + '"]').remove();
         }, this);
+    },
+
+    make_tag_collection: function() {
+        return new L.ElementTagCollection(null, {element: this});
     }
 
 });

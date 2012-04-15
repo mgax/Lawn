@@ -232,12 +232,17 @@ L.WayView = Backbone.View.extend({
     },
 
     initialize: function() {
+        this.tags = new L.TagView({
+            model: this.model.make_tag_collection()
+        });
         this.render();
     },
 
     render: function() {
         var tmpl_data = _({id: this.model.id}).extend(this.model.attributes);
         this.$el.html(L.template['way-view-info'](tmpl_data));
+        this.$el.find('div.way-tags-placeholder').replaceWith(this.tags.$el);
+        this.tags.delegateEvents();
     },
 
     close: function(evt) {
