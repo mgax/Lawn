@@ -30,6 +30,9 @@ L.ElementTagCollection = Backbone.Collection.extend({
 
 
 L.NodeModel = Backbone.Model.extend({
+
+    type: 'node',
+
     initialize: function(attributes, options) {
         this.xml = options['xml'];
         this.$xml = $(this.xml);
@@ -60,10 +63,14 @@ L.NodeModel = Backbone.Model.extend({
     destroy: function() {
         this.trigger('destroy', this);
     }
+
 });
 
 
 L.WayModel = Backbone.Model.extend({
+
+    type: 'way',
+
     initialize: function(attributes, options) {
         this.xml = options['xml'];
         this.$xml = $(this.xml);
@@ -79,6 +86,7 @@ L.WayModel = Backbone.Model.extend({
             this.$xml.find('> nd[ref="' + node.id + '"]').remove();
         }, this);
     }
+
 });
 
 

@@ -190,8 +190,6 @@ L.TagView = Backbone.View.extend({
 
 L.NodeView = Backbone.View.extend({
 
-    className: 'node-properties',
-
     events: {
         'click .close.button': 'close',
         'click .delete.button': 'delete'
@@ -221,6 +219,29 @@ L.NodeView = Backbone.View.extend({
     close: function(evt) {
         if(evt) { evt.preventDefault(); }
         this.tags.save_to_model();
+        this.trigger('close');
+    }
+
+});
+
+
+L.WayView = Backbone.View.extend({
+
+    events: {
+        'click .close.button': 'close'
+    },
+
+    initialize: function() {
+        this.render();
+    },
+
+    render: function() {
+        var tmpl_data = _({id: this.model.id}).extend(this.model.attributes);
+        this.$el.html(L.template['way-view-info'](tmpl_data));
+    },
+
+    close: function(evt) {
+        if(evt) { evt.preventDefault(); }
         this.trigger('close');
     }
 
@@ -292,7 +313,7 @@ L.VectorEdit = Backbone.View.extend({
             this.layer_vector.node_layer,
             {standalone: true});
         this.select_control = new OpenLayers.Control.SelectFeature(
-            this.layer_vector.node_layer,
+            [this.layer_vector.node_layer, this.layer_vector.way_layer],
             {
                 'onSelect': this.modify_control.selectFeature,
                 'onUnselect': this.modify_control.unselectFeature,
@@ -325,6 +346,11 @@ L.LayerEditor = Backbone.View.extend({
 
     className: 'layer_editor-buttons',
 
+    element_view_cls: {
+        'node': L.NodeView,
+        'way': L.WayView
+    },
+
     initialize: function(options) {
         this.map = options['map'];
         this.vector = new L.LayerVector({model: this.model});
@@ -342,18 +368,19 @@ L.LayerEditor = Backbone.View.extend({
         this.vector_edit = new L.VectorEdit({layer_vector: this.vector});
         this.vector_edit.on('select', function(feature) {
             this.node_create.hide();
-            var node_model = feature.L_vector.model;
-            this.node_view = new L.NodeView({model: node_model});
-            this.node_view.on('close', function() {
-                this.node_view.$el.remove();
-                this.node_view = null;
+            var element_model = feature.L_vector.model;
+            var view_cls = this.element_view_cls[element_model.type];
+            this.element_view = new view_cls({model: element_model});
+            this.element_view.on('close', function() {
+                this.element_view.$el.remove();
+                this.element_view = null;
                 this.vector_edit.select_control.unselect(feature);
             }, this);
-            this.node_view.$el.appendTo(this.el);
+            this.element_view.$el.appendTo(this.el);
         }, this);
         this.vector_edit.on('deselect', function() {
-            if(this.node_view) {
-                this.node_view.close();
+            if(this.element_view) {
+                this.element_view.close();
             }
             this.node_create.show();
         }, this);
