@@ -2,6 +2,9 @@
 
 
 L.SelectArea = Backbone.View.extend({
+
+    tagName: 'span',
+
     events: {
         'click .btn-download': 'select'
     },
@@ -12,37 +15,42 @@ L.SelectArea = Backbone.View.extend({
         this.layer = new OpenLayers.Layer.Vector('Edit', {});
         this.map.addLayer(this.layer);
 
-        this.edit_control = new OpenLayers.Control.ModifyFeature(this.layer, {
-            vertexRenderIntent: 'temporary',
-            mode: OpenLayers.Control.ModifyFeature.RESIZE |
-                  OpenLayers.Control.ModifyFeature.RESHAPE |
-                  OpenLayers.Control.ModifyFeature.DRAG
-        });
-        this.map.addControl(this.edit_control);
-        this.edit_control.activate();
+        this.draw_control = new OpenLayers.Control.DrawFeature(
+            this.layer,
+            OpenLayers.Handler.RegularPolygon,
+            {
+                handlerOptions: {
+                    sides: 4,
+                    snapAngle: 90,
+                    irregular: true,
+                    persist: true
+                }
+            });
+        this.draw_control.handler.callbacks.done = _.bind(this.draw_done, this);
+        this.map.addControl(this.draw_control);
+        this.draw_control.activate();
+    },
 
-        var bounds = this.map.calculateBounds().scale(0.5);
-        this.box = new OpenLayers.Feature.Vector(bounds.toGeometry());
-        this.layer.addFeatures([this.box]);
-        this.edit_control.selectControl.select(this.box);
+    draw_done: function(map_bbox) {
+        this.bbox = L.invproj(map_bbox.getBounds());
     },
 
     cleanup: function() {
-        this.edit_control.deactivate();
-        this.map.removeControl(this.edit_control);
-        this.layer.removeFeatures([this.box]);
+        this.draw_control.deactivate();
+        this.map.removeControl(this.draw_control);
         this.map.removeLayer(this.layer);
     },
 
     render: function() {
         var btn = $('<a href="#" class="button btn-download">');
-        this.$el.empty().append(btn.text('download'));
+        this.$el.empty().append(
+            "Drag to select area. Then click ", btn.text('download'), ".");
     },
 
     select: function(evt) {
         evt.preventDefault();
-        var bbox = L.invproj(this.box.geometry.bounds);
-        this.trigger('select', bbox);
+        if(! this.bbox) { return; }
+        this.trigger('select', this.bbox);
     }
 });
 
@@ -59,7 +67,7 @@ _.extend(L.EditingContext.prototype, Backbone.Events, {
 
     begin_selection: function() {
         this.select_area = new L.SelectArea({map: this.map});
-        L.message("Select area then click ", this.select_area.el);
+        L.message(this.select_area.el);
         this.select_area.on('select', function(bbox) {
             L.hide_message();
             this.select_area.cleanup();

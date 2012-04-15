@@ -9,7 +9,7 @@
 L.main = function() {
     L.initialize_map({lon: 26.097, lat: 44.435, zoom: 17});
     L.select_area = new L.SelectArea({map: L.map});
-    L.message("Select area then click ", L.select_area.el);
+    L.message(L.select_area.el);
     L.select_area.on('select', function(bbox) {
         var bbox_values = [bbox.left, bbox.bottom, bbox.right, bbox.top];
         console.log((bbox_values).map(L.quantize));
