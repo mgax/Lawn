@@ -31,6 +31,7 @@ L.update_point = function(point, new_data) {
 
 
 L.NodeVector = Backbone.View.extend({
+
     initialize: function(options) {
         this.layer_vector = options['layer_vector'];
         var geometry = L.proj(L.geometry_for_node(this.model));
@@ -39,15 +40,17 @@ L.NodeVector = Backbone.View.extend({
             this.feature = new OpenLayers.Feature.Vector(geometry);
         }
         this.feature.L_vector = this;
+        this.on('vertexmodified', this.update_position, this);
     },
 
-    feature_modified: function() {
+    update_position: function() {
         var new_position = L.invproj(this.feature.geometry.clone());
         this.model.update_position({
             'lon': L.quantize(new_position.x),
             'lat': L.quantize(new_position.y)
         });
     }
+
 });
 
 
@@ -67,6 +70,8 @@ L.WayVector = Backbone.View.extend({
         this.feature.L_vector = this;
         this.model.nodes.on('remove', this.remove_node, this);
         this.model.nodes.on('change', this.node_change, this);
+        this.on('featuremodified', this.update_node_list, this);
+        this.on('vertexmodified', this.update_node_position, this);
     },
 
     remove_node: function(node_model) {
@@ -86,8 +91,14 @@ L.WayVector = Backbone.View.extend({
         this.trigger('geometry_change', this);
     },
 
-    feature_modified: function() {
-        this.update_node_list();
+    update_node_position: function(vertex) {
+        var node_idx = _(vertex.parent.components).indexOf(vertex);
+        var node = this.model.nodes.at(node_idx);
+        var new_position = L.invproj(vertex.clone());
+        node.update_position({
+            'lon': L.quantize(new_position.x),
+            'lat': L.quantize(new_position.y)
+        });
     },
 
     update_node_list: function() {
@@ -112,8 +123,13 @@ L.LayerVector = Backbone.View.extend({
         this.model.nodes.on('remove', this.remove_node, this);
 
         this.node_layer.events.on({
+            'vertexmodified': function(evt) {
+                var vector_view = evt['feature']['L_vector'];
+                vector_view.trigger('vertexmodified', evt['vertex']);
+            },
             'featuremodified': function(evt) {
-                evt.feature.L_vector.feature_modified();
+                var vector_view = evt['feature']['L_vector'];
+                vector_view.trigger('featuremodified');
             }
         });
 
