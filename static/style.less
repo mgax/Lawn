@@ -1,4 +1,4 @@
-@import "lib/bootstrap-src/less/bootstrap.less";
+@import "lib/bootstrap-2.0.3-less/bootstrap.less";
 
 html,
 body,
@@ -63,4 +63,10 @@ a.button.delete {
 
 a.button.new {
     color: green;
+}
+
+
+// fix for interaction with openlayers
+img.olTileImage {
+    max-width: none;
 }
