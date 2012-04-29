@@ -17,6 +17,7 @@ DEFAULT_CONFIG = {
     'OAUTH_ENABLE_CALLBACK': False,
     'PERMANENT_SESSION_LIFETIME': datetime.timedelta(days=365),
     'OSM_XML_SIGNATURE': "Lawn %s" % __version__,
+    'OPENLAYERS_JS': 'lib/openlayers/OpenLayers.js',
 }
 
 
@@ -65,16 +66,12 @@ def create_app():
     app.config.update(DEFAULT_CONFIG)
     app.config.from_pyfile('settings.py', silent=True)
     dbsession.initialize_app(app)
-    if 'OPENLAYERS_SRC' in app.config:
+
+    if 'STATIC_URL_MAP' in app.config:
         from werkzeug.wsgi import SharedDataMiddleware
-        app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
-            '/openlayers-src': app.config['OPENLAYERS_SRC'],
-        })
-        app.config['OPENLAYERS_JS'] = '/openlayers-src/lib/OpenLayers.js'
-    else:
-        with app.test_request_context():
-            app.config['OPENLAYERS_JS'] = flask.url_for('static',
-                filename='lib/openlayers/OpenLayers.js')
+        app.wsgi_app = SharedDataMiddleware(app.wsgi_app,
+                                            app.config['STATIC_URL_MAP'])
+
     app.config['OSM_API_URL'] = app.config['OSM_API_URL'].rstrip('/')
     osm.initialize_app(app)
     return app
