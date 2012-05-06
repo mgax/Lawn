@@ -52,9 +52,27 @@
   <% if(state == 'initial') { %>
     <a href="#" class="edit button">edit</a>
   <% } %>
+  <span class="debug-menu-placeholder"></span>
   <% if(state == 'edit') { %>
     upload to [<a href="#" class="upload_to_osm button">osm api</a>];
     download [<a href="#" class="download_layer button">layer</a>],
     [<a href="#" class="download_diff button">diff</a>]
   <% } %>
+</script>
+
+
+<script type="text/template+html" name="debug-menu">
+  <div class="btn-group">
+    <button class="btn btn-mini dropdown-toggle" data-toggle="dropdown">
+      debug <span class="caret"></span>
+    </button>
+    <ul class="dropdown-menu dropdown-menu-debug">
+      <li>
+        <a href="#">
+          OSM XML
+          <% if(view['osm_xml']) { %><i class="icon-ok"></i> <% } %>
+        </a>
+      </li>
+    </ul>
+  </div>
 </script>

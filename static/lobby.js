@@ -67,11 +67,13 @@ L.EditingContext = Backbone.View.extend({
     initialize: function(options) {
         this.map = options['map'];
         this.state = 'initial';
+        this.debug_menu = new L.DebugMenu;
         this.render();
     },
 
     render: function() {
         this.$el.html(L.template['editing-context']({'state': this.state}));
+        this.$el.find('.debug-menu-placeholder').replaceWith(this.debug_menu.el);
     },
 
     area_selected: function(bbox) {
@@ -130,6 +132,19 @@ L.EditingContext = Backbone.View.extend({
         evt.preventDefault();
         L.download_xml(this.diff(), 'diff.osc');
     },
+
+});
+
+
+L.DebugMenu = Backbone.View.extend({
+
+    initialize: function(options) {
+        this.render();
+    },
+
+    render: function() {
+        this.$el.html(L.template['debug-menu']({'view': this}));
+    }
 
 });
 
